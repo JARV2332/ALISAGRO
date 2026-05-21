@@ -1,11 +1,17 @@
+import { extraerValoresVoz } from './vozParse.js'
+
 /**
  * Extrae temperatura y humedad del texto OCR (LCD, etiquetas o nota escrita).
  * Siempre conviene validar manualmente antes de guardar.
  */
-export function extraerValoresLcd(textoCrudo) {
-  const textoDetectado = textoCrudo.trim()
+export function extraerValoresLcd(textoCrudo, { esVoz = false } = {}) {
+  let textoDetectado = textoCrudo.trim()
   if (!textoDetectado) {
     return { temp_ambiente: null, humedad_ambiente: null, textoDetectado: '' }
+  }
+
+  if (esVoz) {
+    return extraerValoresVoz(textoDetectado)
   }
 
   const sinAcentos = textoDetectado
@@ -70,4 +76,5 @@ export const FORMATO_OCR_AYUDA = {
     'HUM 65',
   ],
   alternativo: ['26.5 °C', '65 %'],
+  voz: 'Temperatura 26 grados humedad 65 por ciento',
 }

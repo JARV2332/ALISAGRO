@@ -131,10 +131,45 @@ export function IconMapPin({ className = iconClass }) {
   )
 }
 
+export function IconMic({ className = iconClass }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-14 0M12 18v3" />
+    </svg>
+  )
+}
+
 export function IconField({ className = iconClass }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
       <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18M5 21V9l7-4 7 4v12M9 21v-6h6v6" />
+    </svg>
+  )
+}
+
+export function IconReport({ className = iconClass }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-6M12 17V7M15 17v-4" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 3h12a2 2 0 012 2v14l-3-2-3 2-3-2-3 2V5a2 2 0 012-2z" />
+    </svg>
+  )
+}
+
+export function IconDownload({ className = iconClass }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0 0l4-4m-4 4l-4-4M4 21h16" />
+    </svg>
+  )
+}
+
+export function IconPdf({ className = iconClass }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M14 2v6h6M8 13h1v4H8v-4zm4 0h1.5a1.5 1.5 0 010 3H12v-3zm5 0h1v4h-1v-1.5h-1v1.5h-1v-4h1v1.5h1V13z" />
     </svg>
   )
 }

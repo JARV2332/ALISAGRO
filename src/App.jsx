@@ -1,11 +1,16 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import Dashboard from './components/Dashboard.jsx'
 import OcrScanner from './components/OcrScanner.jsx'
-import { IconChart, IconCamera, IconLogo } from './components/Icons.jsx'
+import VoiceCapture from './components/VoiceCapture.jsx'
+import { IconChart, IconCamera, IconLogo, IconMic, IconReport } from './components/Icons.jsx'
+
+const Reports = lazy(() => import('./components/Reports.jsx'))
 
 const TABS = [
   { id: 'dashboard', label: 'Monitoreo', desc: 'Tiempo real', Icon: IconChart },
-  { id: 'ocr', label: 'Captura OCR', desc: 'Termómetro LCD', Icon: IconCamera },
+  { id: 'reportes', label: 'Reportes', desc: 'Gráficas y CSV', Icon: IconReport },
+  { id: 'ocr', label: 'Captura OCR', desc: 'Foto LCD', Icon: IconCamera },
+  { id: 'voz', label: 'Captura voz', desc: 'Dictar lectura', Icon: IconMic },
 ]
 
 const PILARES = [
@@ -56,7 +61,7 @@ export default function App() {
               </ul>
             </div>
 
-            <nav className="flex gap-2 p-1.5 rounded-2xl bg-dark-panel ring-1 ring-dark-border self-start w-full sm:w-auto">
+            <nav className="flex flex-wrap gap-2 p-1.5 rounded-2xl bg-dark-panel ring-1 ring-dark-border w-full">
               {TABS.map(({ id, label, desc, Icon }) => {
                 const activo = tab === id
                 return (
@@ -96,7 +101,21 @@ export default function App() {
       </header>
 
       <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
-        {tab === 'dashboard' ? <Dashboard /> : <OcrScanner />}
+        {tab === 'dashboard' && <Dashboard />}
+        {tab === 'reportes' && (
+          <Suspense
+            fallback={
+              <div className="py-16 text-center text-dark-muted">
+                <span className="inline-block h-10 w-10 rounded-full border-4 border-lime border-t-transparent animate-spin" />
+                <p className="mt-4 text-sm">Cargando reportes…</p>
+              </div>
+            }
+          >
+            <Reports />
+          </Suspense>
+        )}
+        {tab === 'ocr' && <OcrScanner />}
+        {tab === 'voz' && <VoiceCapture />}
       </main>
 
       <footer className="mt-auto border-t border-dark-border bg-dark-panel py-5">

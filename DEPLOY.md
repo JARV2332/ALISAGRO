@@ -36,6 +36,7 @@ git push -u origin main
 |------|--------|
 | `VITE_SUPABASE_URL` | `https://lhbalfmlctawmfbpccfo.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | tu clave publishable/anon |
+| `GROQ_API_KEY` | clave gratis de [console.groq.com](https://console.groq.com) → API Keys |
 
 4. Deploy → copiar URL (`https://alisagro-xxx.vercel.app`)
 

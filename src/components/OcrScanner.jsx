@@ -7,46 +7,16 @@ import {
 } from '../lib/alisagroConfig.js'
 import { supabase } from '../lib/supabaseClient.js'
 import { extraerValoresLcd, FORMATO_OCR_AYUDA } from '../lib/ocrParse.js'
-import { IconCamera, IconCheck, IconUpload } from './Icons.jsx'
+import { IconCamera, IconUpload } from './Icons.jsx'
+import MensajeEstado from './MensajeEstado.jsx'
 
 export { extraerValoresLcd } from '../lib/ocrParse.js'
-
-function MensajeEstado({ estado, mensaje }) {
-  if (!mensaje) return null
-
-  const estilos = {
-    exito: 'bg-lime/10 border-lime/40 text-lime',
-    error: 'bg-red-500/10 border-red-500/40 text-red-300',
-    procesando: 'bg-dark-elevated border-lime/30 text-white',
-    guardando: 'bg-dark-elevated border-lime/30 text-white',
-    listo: 'bg-dark-elevated border-dark-border text-dark-muted',
-    idle: 'bg-dark-panel border-dark-border text-dark-muted',
-  }
-
-  return (
-    <div
-      className={`rounded-2xl border px-5 py-4 text-sm font-medium flex items-start gap-3 ${estilos[estado] ?? estilos.idle}`}
-      role="status"
-    >
-      {(estado === 'procesando' || estado === 'guardando') && (
-        <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 border-lime border-t-transparent animate-spin" />
-      )}
-      {estado === 'exito' && (
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-lime text-dark">
-          <IconCheck className="w-4 h-4" />
-        </span>
-      )}
-      <span className="leading-relaxed">{mensaje}</span>
-    </div>
-  )
-}
 
 export default function OcrScanner() {
   const workerRef = useRef(null)
   const fileInputRef = useRef(null)
   const videoRef = useRef(null)
   const streamRef = useRef(null)
-
   const [previewUrl, setPreviewUrl] = useState(null)
   const [textoOcr, setTextoOcr] = useState('')
   const [tempAmbiente, setTempAmbiente] = useState('')
@@ -65,6 +35,23 @@ export default function OcrScanner() {
         (window.isSecureContext ||
           window.location.hostname === 'localhost' ||
           window.location.hostname === '127.0.0.1')
+    )
+  }, [])
+
+  const aplicarTextoOcr = useCallback((texto) => {
+    const textoLimpio = texto.trim()
+    setTextoOcr(textoLimpio)
+
+    const { temp_ambiente, humedad_ambiente } = extraerValoresLcd(textoLimpio)
+
+    if (temp_ambiente !== null) setTempAmbiente(String(temp_ambiente))
+    if (humedad_ambiente !== null) setHumedadAmbiente(String(humedad_ambiente))
+
+    setEstado('listo')
+    setMensaje(
+      temp_ambiente !== null || humedad_ambiente !== null
+        ? 'Valores detectados. Revise y pulse Guardar lectura cuando estén correctos.'
+        : 'No se detectaron números claros. Ingrese los valores manualmente.'
     )
   }, [])
 
@@ -188,27 +175,14 @@ export default function OcrScanner() {
 
       try {
         const { data } = await workerRef.current.recognize(file)
-        const texto = data?.text ?? ''
-        setTextoOcr(texto)
-
-        const { temp_ambiente, humedad_ambiente } = extraerValoresLcd(texto)
-
-        if (temp_ambiente !== null) setTempAmbiente(String(temp_ambiente))
-        if (humedad_ambiente !== null) setHumedadAmbiente(String(humedad_ambiente))
-
-        setEstado('listo')
-        setMensaje(
-          temp_ambiente !== null || humedad_ambiente !== null
-            ? 'Valores detectados. Revise y corrija si es necesario antes de guardar.'
-            : 'No se detectaron números claros. Ingrese los valores manualmente.'
-        )
+        aplicarTextoOcr(data?.text ?? '')
       } catch (err) {
         console.error(err)
         setEstado('error')
         setMensaje('Error al procesar la imagen. Intente otra foto con mejor luz y enfoque.')
       }
     },
-    [detenerCamara, liberarPreview]
+    [aplicarTextoOcr, detenerCamara, liberarPreview]
   )
 
   const iniciarCamara = async () => {
@@ -346,12 +320,12 @@ export default function OcrScanner() {
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="text-center sm:text-left">
         <h2 className="font-display text-2xl sm:text-3xl font-bold text-white">
-          Captura inclusiva OCR
+          Captura OCR (foto)
         </h2>
         <p className="text-dark-muted mt-2 text-sm leading-relaxed max-w-lg">
-          Fotografíe la pantalla LCD o una nota con números claros. OCR con{' '}
-          <strong className="text-lime/90">Tesseract</strong> (gratis); siempre valide antes de
-          guardar.
+          Fotografíe la pantalla LCD o suba una imagen. OCR con{' '}
+          <strong className="text-lime/90">Tesseract</strong> (gratis). Para dictar use la pestaña{' '}
+          <strong className="text-lime/90">Captura voz</strong>.
         </p>
       </div>
 
@@ -499,7 +473,7 @@ export default function OcrScanner() {
         <details className="card px-4 py-3 text-xs group">
           <summary className="cursor-pointer font-bold text-lime uppercase tracking-wide list-none flex items-center gap-2">
             <span className="text-dark-muted group-open:rotate-90 transition-transform">▸</span>
-            Texto OCR bruto (Tesseract)
+            Texto OCR (Tesseract)
           </summary>
           <pre className="mt-3 whitespace-pre-wrap font-mono text-dark-muted bg-dark-elevated rounded-lg p-3 ring-1 ring-dark-border">
             {textoOcr}

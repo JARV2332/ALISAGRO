@@ -436,4 +436,420 @@
   .lectura-historial-card:hover {
     border-color: rgb(164 198 57 / 0.3);
   }
+
+  /* Visualizador de voz */
+  .voice-visualizer-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    padding: 1rem 0;
+  }
+
+  .voice-visualizer-panel--activo .voice-visualizer__bar {
+    animation: voice-bar 0.85s ease-in-out infinite;
+  }
+
+  .voice-visualizer-panel--activo .voice-visualizer__ring {
+    animation: voice-ring 2s ease-out infinite;
+  }
+
+  .voice-visualizer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 6px;
+    height: 64px;
+    z-index: 1;
+  }
+
+  .voice-visualizer__bar {
+    width: 8px;
+    height: 12px;
+    border-radius: 4px;
+    background: rgb(164 198 57 / 0.35);
+    transform-origin: bottom;
+  }
+
+  .voice-visualizer__rings {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .voice-visualizer__ring {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 2px solid rgb(164 198 57 / 0.25);
+    opacity: 0;
+  }
+
+  .voice-visualizer__ring--delay {
+    animation-delay: 1s;
+  }
+
+  .voice-visualizer__label {
+    margin-top: 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-dark-muted);
+    z-index: 1;
+  }
+
+  .voice-visualizer-panel--activo .voice-visualizer__label {
+    color: var(--color-lime);
+  }
+
+  @keyframes voice-bar {
+    0%,
+    100% {
+      height: 12px;
+      background: rgb(164 198 57 / 0.4);
+    }
+    50% {
+      height: 52px;
+      background: var(--color-lime);
+    }
+  }
+
+  @keyframes voice-ring {
+    0% {
+      transform: scale(0.6);
+      opacity: 0.6;
+    }
+    100% {
+      transform: scale(1.4);
+      opacity: 0;
+    }
+  }
+
+  .report-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  @media (min-width: 640px) {
+    .report-kpi-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .report-kpi-grid {
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    }
+  }
+
+  .report-kpi {
+    @apply ring-1 ring-dark-border;
+  }
+
+  .report-filtros-grid {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  @media (min-width: 400px) {
+    .report-filtros-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .report-check:hover span {
+    @apply text-lime;
+  }
+
+  /* Plantilla PDF — fondo claro, marca ALISAGRO */
+  .pdf-report-root {
+    position: fixed;
+    left: -9999px;
+    top: 0;
+    width: 210mm;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .pdf-report-document {
+    width: 190mm;
+    max-width: 190mm;
+    margin: 0 auto;
+    padding: 0;
+    background: #ffffff;
+    color: #1a1a1a;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+  .pdf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px 22px;
+    background: linear-gradient(135deg, #121212 0%, #1f2910 55%, #2d3d12 100%);
+    border-radius: 12px;
+    color: #fff;
+    margin-bottom: 18px;
+  }
+
+  .pdf-header-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .pdf-logo-mark {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(145deg, #b8d94f, #8aab32);
+    box-shadow: 0 4px 16px rgb(164 198 57 / 0.45);
+  }
+
+  .pdf-title {
+    font-family: 'Outfit', system-ui, sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .pdf-title-accent {
+    color: #a4c639;
+  }
+
+  .pdf-subtitle {
+    margin: 6px 0 0;
+    font-size: 12px;
+    color: rgb(255 255 255 / 0.75);
+  }
+
+  .pdf-header-meta {
+    text-align: right;
+    font-size: 10px;
+    color: rgb(255 255 255 / 0.85);
+    line-height: 1.6;
+  }
+
+  .pdf-header-meta strong {
+    color: #a4c639;
+    font-weight: 700;
+  }
+
+  .pdf-section {
+    margin-bottom: 18px;
+    padding: 0 4px;
+  }
+
+  .pdf-section-title {
+    font-family: 'Outfit', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #121212;
+    margin: 0 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 3px solid #a4c639;
+    display: inline-block;
+    min-width: 120px;
+  }
+
+  .pdf-filtros-box {
+    background: #f4f7ee;
+    border: 1px solid #d4e4a8;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 10px;
+    line-height: 1.65;
+  }
+
+  .pdf-filtros-box strong {
+    color: #5a7a1a;
+  }
+
+  .pdf-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .pdf-kpi {
+    background: #fafafa;
+    border: 1px solid #e5e7eb;
+    border-top: 3px solid #a4c639;
+    border-radius: 10px;
+    padding: 12px 10px;
+    text-align: center;
+  }
+
+  .pdf-kpi-label {
+    display: block;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6b7280;
+    font-weight: 700;
+  }
+
+  .pdf-kpi-value {
+    display: block;
+    font-family: 'Outfit', system-ui, sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: #121212;
+    margin-top: 4px;
+  }
+
+  .pdf-kpi-value small {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    margin-left: 2px;
+  }
+
+  .pdf-kpi-sub {
+    display: block;
+    font-size: 9px;
+    color: #9ca3af;
+    margin-top: 4px;
+  }
+
+  .pdf-svg-chart {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+  }
+
+  .pdf-leyenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 8px;
+    font-size: 10px;
+    color: #4b5563;
+  }
+
+  .pdf-leyenda-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .pdf-leyenda-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .pdf-barras {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .pdf-barra-fila {
+    display: grid;
+    grid-template-columns: 100px 1fr 44px;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+  }
+
+  .pdf-barra-nombre {
+    color: #374151;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pdf-barra-track {
+    height: 10px;
+    background: #f3f4f6;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .pdf-barra-fill {
+    height: 100%;
+    border-radius: 999px;
+    min-width: 4px;
+  }
+
+  .pdf-barra-valor {
+    font-weight: 700;
+    color: #121212;
+    text-align: right;
+  }
+
+  .pdf-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9px;
+    margin-top: 8px;
+  }
+
+  .pdf-table th {
+    background: #121212;
+    color: #a4c639;
+    font-weight: 700;
+    text-align: left;
+    padding: 8px 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-size: 8px;
+  }
+
+  .pdf-table td {
+    padding: 6px;
+    border-bottom: 1px solid #e5e7eb;
+    color: #374151;
+  }
+
+  .pdf-table tbody tr:nth-child(even) td {
+    background: #f9fafb;
+  }
+
+  .pdf-muted {
+    color: #9ca3af;
+    font-size: 10px;
+  }
+
+  .pdf-tabla-nota {
+    margin: 0 0 8px;
+  }
+
+  .pdf-page-break {
+    page-break-before: always;
+  }
+
+  .pdf-footer {
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 2px solid #a4c639;
+    text-align: center;
+    color: #6b7280;
+    font-size: 10px;
+  }
+
+  .pdf-footer strong {
+    color: #5a7a1a;
+  }
+
+  .pdf-footer-small {
+    font-size: 8px;
+    margin-top: 4px;
+    color: #9ca3af;
+  }
 }
