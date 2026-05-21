@@ -22,10 +22,38 @@ const LIMITE_HISTORIAL = 10
 
 function formatearFecha(iso) {
   if (!iso) return '—'
-  return new Intl.DateTimeFormat('es-CO', {
-    dateStyle: 'short',
-    timeStyle: 'medium',
-  }).format(new Date(iso))
+  const d = new Date(iso)
+  const fecha = new Intl.DateTimeFormat('es-CO', {
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit',
+  }).format(d)
+  const hora = new Intl.DateTimeFormat('es-CO', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).format(d)
+  return `${fecha} · ${hora}`
+}
+
+/** Fecha y hora en dos líneas (ficha del nodo, sin cortes raros) */
+function formatearFechaEnPartes(iso) {
+  if (!iso) return { fecha: '—', hora: '' }
+  const d = new Date(iso)
+  return {
+    fecha: new Intl.DateTimeFormat('es-CO', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(d),
+    hora: new Intl.DateTimeFormat('es-CO', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }).format(d),
+  }
 }
 
 function formatearNum(valor, unidad = '') {
@@ -162,32 +190,38 @@ function FichaNodo({ nodo, deviceId, metodo, ultimaLectura }) {
     <section className="ficha-nodo" aria-label="Información del nodo">
       <div className="ficha-nodo__inner">
         <header className="ficha-nodo__header">
-          <div className="ficha-nodo__avatar" aria-hidden>
-            <IconMapPin className="w-6 h-6 sm:w-7 sm:h-7" />
+          <div className="ficha-nodo__header-main">
+            <div className="ficha-nodo__avatar" aria-hidden>
+              <IconMapPin className="w-6 h-6 sm:w-7 sm:h-7" />
+            </div>
+
+            <div className="ficha-nodo__title-block">
+              <div className="ficha-nodo__badges">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-lime/12 text-lime px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ring-1 ring-lime/25">
+                  Nodo activo
+                </span>
+                {metodo && <BadgeMetodo metodo={metodo} />}
+              </div>
+              <h3 className="ficha-nodo__title">{nombre}</h3>
+              {finca && <p className="ficha-nodo__finca">{finca}</p>}
+              <p className="ficha-nodo__device">
+                ID <strong>{deviceId}</strong>
+              </p>
+            </div>
           </div>
 
-          <div className="ficha-nodo__title-block">
-            <div className="ficha-nodo__badges">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-lime/12 text-lime px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ring-1 ring-lime/25">
-                Nodo activo
-              </span>
-              {metodo && <BadgeMetodo metodo={metodo} />}
-            </div>
-            <h3 className="ficha-nodo__title">{nombre}</h3>
-            {finca && <p className="ficha-nodo__finca">{finca}</p>}
-            <p className="ficha-nodo__device">
-              ID <strong>{deviceId}</strong>
-            </p>
-          </div>
-
-          {ultimaLectura && (
-            <div className="ficha-nodo__time">
-              <span className="ficha-nodo__time-label">Última lectura</span>
-              <time className="ficha-nodo__time-value" dateTime={ultimaLectura}>
-                {formatearFecha(ultimaLectura)}
-              </time>
-            </div>
-          )}
+          {ultimaLectura && (() => {
+            const { fecha, hora } = formatearFechaEnPartes(ultimaLectura)
+            return (
+              <div className="ficha-nodo__time">
+                <span className="ficha-nodo__time-label">Última lectura</span>
+                <time className="ficha-nodo__time-value" dateTime={ultimaLectura}>
+                  <span className="ficha-nodo__time-fecha">{fecha}</span>
+                  <span className="ficha-nodo__time-hora">{hora}</span>
+                </time>
+              </div>
+            )
+          })()}
         </header>
 
         {(parcela || ubicacion || cultivo) && (
@@ -215,7 +249,7 @@ function FilaHistorialMovil({ fila, esReciente, nodoPorDevice }) {
       }`}
     >
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-        <time className="text-xs font-semibold text-dark-muted tabular-nums">
+        <time className="text-xs font-semibold text-dark-muted tabular-nums whitespace-nowrap">
           {formatearFecha(fila.created_at)}
         </time>
         <BadgeMetodo metodo={fila.metodo_captura} />
