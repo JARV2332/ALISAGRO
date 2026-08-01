@@ -6,16 +6,13 @@ const supabaseKey =
   import.meta.env.VITE_SUPABASE_ANON_KEY ??
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error(
-    '[ALISAGRO] Faltan variables de entorno: VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY. ' +
-      'En local: archivo .env. En Vercel: Project Settings → Environment Variables.'
-  )
-}
+export const supabaseConfigurado = Boolean(supabaseUrl && supabaseKey)
 
-export const supabase = createClient(supabaseUrl ?? '', supabaseKey ?? '', {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-  },
-})
+export const supabase = supabaseConfigurado
+  ? createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    })
+  : null

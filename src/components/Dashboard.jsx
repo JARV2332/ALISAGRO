@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
+  ALI_DEVICE_DEMO_CLIMA,
   ALI_NODOS_FALLBACK,
   ALI_TABLA_LECTURAS,
   ALI_TABLA_NODOS,
 } from '../lib/alisagroConfig.js'
-import { supabase } from '../lib/supabaseClient.js'
+import { crearLecturaDemo, leerHistorialDemo } from '../lib/demoClima.js'
+import { supabase, supabaseConfigurado } from '../lib/supabaseClient.js'
 import {
   IconCloud,
   IconDroplet,
@@ -19,6 +21,8 @@ import {
 
 const TABLA = ALI_TABLA_LECTURAS
 const LIMITE_HISTORIAL = 10
+const MAX_EDAD_LECTURA_MS = 20 * 60 * 1000
+const INTERVALO_DEMO_MS = 15 * 60 * 1000
 
 function formatearFecha(iso) {
   if (!iso) return '—'
@@ -100,17 +104,21 @@ function estadoHumedadSuelo(porcentaje) {
 }
 
 function BadgeMetodo({ metodo }) {
+  const esDemo = metodo === 'DEMO_CLIMA'
   const esIot = metodo === 'IOT'
+  const etiqueta = esDemo ? 'Demo clima' : esIot ? 'IoT' : 'OCR'
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${
-        esIot
+        esDemo
+          ? 'bg-sky-500/15 text-sky-300 ring-1 ring-sky-500/40'
+          : esIot
           ? 'bg-lime text-dark'
           : 'bg-dark-elevated text-amber-300 ring-1 ring-amber-500/40'
       }`}
     >
-      <span className={`h-1.5 w-1.5 rounded-full ${esIot ? 'bg-dark/40' : 'bg-amber-400'}`} />
-      {esIot ? 'IoT' : 'OCR'}
+      <span className={`h-1.5 w-1.5 rounded-full ${esDemo ? 'bg-sky-300' : esIot ? 'bg-dark/40' : 'bg-amber-400'}`} />
+      {etiqueta}
     </span>
   )
 }
@@ -295,6 +303,7 @@ export default function Dashboard() {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
   const [conectadoRealtime, setConectadoRealtime] = useState(false)
+  const [modoDemo, setModoDemo] = useState(false)
 
   const resolverNodo = useCallback((deviceId, filaDb) => {
     if (filaDb) return filaDb
@@ -310,6 +319,10 @@ export default function Dashboard() {
       }
 
       const fallback = resolverNodo(deviceId, null)
+      if (!supabaseConfigurado) {
+        setNodoActivo(fallback ? { device_id: deviceId, ...fallback } : null)
+        return
+      }
       const { data, error: errNodo } = await supabase
         .from(ALI_TABLA_NODOS)
         .select('device_id, nombre, parcela, ubicacion, finca, cultivo, notas')
@@ -329,6 +342,10 @@ export default function Dashboard() {
   )
 
   const cargarTodosNodos = useCallback(async () => {
+    if (!supabaseConfigurado) {
+      setNodosMap({ ...ALI_NODOS_FALLBACK })
+      return
+    }
     const { data, error: errNodo } = await supabase
       .from(ALI_TABLA_NODOS)
       .select('device_id, nombre, parcela, ubicacion, finca, cultivo')
@@ -345,6 +362,7 @@ export default function Dashboard() {
   }, [])
 
   const aplicarLectura = useCallback((nuevaFila) => {
+    setModoDemo(false)
     setUltima(nuevaFila)
     setHistorial((prev) => {
       const sinDuplicado = prev.filter((r) => r.id !== nuevaFila.id)
@@ -353,9 +371,36 @@ export default function Dashboard() {
     if (nuevaFila.device_id) cargarNodo(nuevaFila.device_id)
   }, [cargarNodo])
 
+  const cargarDemo = useCallback(async () => {
+    try {
+      const { lectura, historial: historialDemo } = await crearLecturaDemo()
+      setUltima(lectura)
+      setHistorial(historialDemo)
+      setModoDemo(true)
+      setError(null)
+      await cargarNodo(lectura.device_id)
+    } catch (err) {
+      const historialDemo = leerHistorialDemo()
+      if (historialDemo.length) {
+        setUltima(historialDemo[0])
+        setHistorial(historialDemo)
+        setModoDemo(true)
+        await cargarNodo(historialDemo[0].device_id)
+        return
+      }
+      setError(err?.message ?? 'No se pudo cargar el clima demo')
+    }
+  }, [cargarNodo])
+
   const cargarInicial = useCallback(async () => {
     setCargando(true)
     setError(null)
+
+    if (!supabaseConfigurado) {
+      await cargarDemo()
+      setCargando(false)
+      return
+    }
 
     const [{ data, error: err }, _] = await Promise.all([
       supabase
@@ -367,29 +412,30 @@ export default function Dashboard() {
     ])
 
     if (err) {
-      setError(err.message)
+      await cargarDemo()
       setCargando(false)
       return
     }
 
     const filas = data ?? []
-    if (filas.length > 0) {
+    const lecturaReciente =
+      filas[0] && Date.now() - new Date(filas[0].created_at).getTime() <= MAX_EDAD_LECTURA_MS
+    if (lecturaReciente) {
       setUltima(filas[0])
       setHistorial(filas)
       await cargarNodo(filas[0].device_id)
     } else {
-      setUltima(null)
-      setHistorial([])
-      setNodoActivo(null)
+      await cargarDemo()
     }
     setCargando(false)
-  }, [cargarNodo, cargarTodosNodos])
+  }, [cargarDemo, cargarNodo, cargarTodosNodos])
 
   useEffect(() => {
     cargarInicial()
   }, [cargarInicial])
 
   useEffect(() => {
+    if (!supabaseConfigurado) return undefined
     const canal = supabase
       .channel('alisagro-lecturas-realtime')
       .on(
@@ -405,6 +451,12 @@ export default function Dashboard() {
       supabase.removeChannel(canal)
     }
   }, [aplicarLectura])
+
+  useEffect(() => {
+    if (!modoDemo) return undefined
+    const intervalo = window.setInterval(cargarDemo, INTERVALO_DEMO_MS)
+    return () => window.clearInterval(intervalo)
+  }, [cargarDemo, modoDemo])
 
   const estadoHum = useMemo(
     () => estadoHumedadSuelo(ultima?.humedad_suelo),
@@ -440,7 +492,9 @@ export default function Dashboard() {
             Panel de monitoreo
           </h2>
           <p className="text-dark-muted mt-1 text-sm leading-relaxed">
-            Lecturas en tiempo real · ubicación del nodo en la finca
+            {modoDemo
+              ? 'Clima de Zona 4, Ciudad de Guatemala · actualización cada 15 minutos'
+              : 'Lecturas en tiempo real · ubicación del nodo en la finca'}
           </p>
         </div>
 
@@ -487,6 +541,13 @@ export default function Dashboard() {
 
       {ultima && (
         <>
+          {modoDemo && ultima.device_id === ALI_DEVICE_DEMO_CLIMA && (
+            <div className="rounded-2xl bg-sky-500/10 border border-sky-500/35 px-5 py-4 text-sm text-sky-100">
+              <strong>Modo demo — Zona 4, Ciudad de Guatemala.</strong> Temperatura y humedad ambiente
+              provienen del clima público; los valores de suelo son estimados y no reemplazan sensores.
+              El historial se guarda solo en este navegador.
+            </div>
+          )}
           <FichaNodo
             nodo={nodoActivo}
             deviceId={ultima.device_id}
