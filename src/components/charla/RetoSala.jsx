@@ -235,11 +235,35 @@ export function RetoAnfitrion() {
     )
   }
 
+  if (sala?.estado === 'fin') {
+    return (
+      <div className="fixed inset-0 z-40 overflow-y-auto bg-[#101010] px-4 py-10 text-white sm:px-6">
+        <h2 className="text-center font-display text-4xl font-bold sm:text-6xl">Resultados</h2>
+        <Podio gente={gente} />
+        <div className="mt-10 flex flex-wrap justify-center gap-2">
+          <button type="button" className="btn-primary" onClick={otraVez}>
+            Jugar otra vez
+          </button>
+          <button type="button" className="btn-secondary" onClick={limpiar}>
+            Eliminar resultados
+          </button>
+          <button type="button" className="btn-secondary" onClick={cerrar}>
+            Cerrar sala
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className={`mx-auto grid max-w-6xl gap-6 ${sala?.estado === 'fin' ? '' : 'lg:grid-cols-[1.3fr_0.7fr]'}`}>
+    <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1.3fr_0.7fr]">
       <div>
-        <p className="text-sm font-bold uppercase tracking-[0.16em] text-lime">Anfitrión</p>
-        <h2 className="mt-1 font-display text-4xl font-bold tracking-widest">{codigo}</h2>
+        {sala?.estado !== 'fin' && (
+          <>
+            <p className="text-sm font-bold uppercase tracking-[0.16em] text-lime">Anfitrión</p>
+            <h2 className="mt-1 font-display text-4xl font-bold tracking-widest">{codigo}</h2>
+          </>
+        )}
         {error && faltaLaSala(error) && <AvisoSql />}
         {aviso && aviso !== 'falta-sql' && <p className="mt-3 text-sm text-amber-200">{aviso}</p>}
         {cargada && !sala && !error && (
@@ -313,24 +337,6 @@ export function RetoAnfitrion() {
                   {sala.indice + 1 >= sala.mazo.length ? 'Ver resultados' : 'Siguiente'}
                 </button>
               )}
-            </div>
-          </div>
-        )}
-
-        {sala?.estado === 'fin' && (
-          <div className="mt-2">
-            <p className="text-center text-sm font-bold uppercase tracking-[0.18em] text-lime">El podio</p>
-            <Podio gente={gente} />
-            <div className="mt-6 flex flex-wrap justify-center gap-2">
-              <button type="button" className="btn-primary" onClick={otraVez}>
-                Jugar otra vez
-              </button>
-              <button type="button" className="btn-secondary" onClick={limpiar}>
-                Eliminar resultados
-              </button>
-              <button type="button" className="btn-secondary" onClick={cerrar}>
-                Cerrar sala
-              </button>
             </div>
           </div>
         )}
@@ -478,7 +484,7 @@ export function RetoJugador({ codigoInicial }) {
 
   return (
     <div className="min-h-dvh bg-[#0e0e0e] px-4 py-6 text-white">
-      <div className="mx-auto flex min-h-[80vh] max-w-lg flex-col">
+      <div className={`mx-auto flex min-h-[80vh] flex-col ${sala?.estado === 'fin' ? 'max-w-4xl' : 'max-w-lg'}`}>
         <img src="/charla/community-day.png" alt="AWS Community Day Guatemala" className="mx-auto h-16 w-auto" />
         <p className="mt-4 text-center text-sm font-bold uppercase tracking-[0.16em] text-lime">
           Sala {codigo || '…'}
@@ -537,7 +543,7 @@ export function RetoJugador({ codigoInicial }) {
 
         {yo && sala?.estado === 'lobby' && (
           <div className="mt-16 text-center">
-            <Cara id={yo.avatar} grande />
+            <Cara id={yo.avatar} tamano="lg" />
             <p className="mt-4 font-display text-4xl font-bold">{yo.nombre}</p>
             <p className="mt-4 text-xl text-white/75">Ya estás dentro. Esperando a que inicie.</p>
             <button type="button" className="btn-secondary mt-8" onClick={salir}>
@@ -579,14 +585,7 @@ export function RetoJugador({ codigoInicial }) {
           </div>
         )}
 
-        {yo && sala?.estado === 'fin' && (
-          <div className="mt-8">
-            <p className="text-center font-display text-4xl font-bold text-lime">
-              {gente.find((p) => p.id === yo.id)?.puntaje ?? 0} puntos
-            </p>
-            <Podio gente={gente} />
-          </div>
-        )}
+        {yo && sala?.estado === 'fin' && <Podio gente={gente} />}
 
         {!sala && !buscando && cargada && !aviso && (
           <p className="mt-10 text-center text-lg text-white/70">El anfitrión todavía no abre la sala.</p>
@@ -597,46 +596,67 @@ export function RetoJugador({ codigoInicial }) {
 }
 
 function Podio({ gente }) {
-  if (gente.length === 0) return <p className="mt-4 text-center text-white/70">Nadie jugó esta vez.</p>
+  if (gente.length === 0) return <p className="mt-8 text-center text-white/70">Nadie jugó esta vez.</p>
   const columnas = [
-    gente[1] && { persona: gente[1], lugar: 2, alto: 'h-24 sm:h-28', fondo: '#d5dbe3', tinta: '#1f2937', demora: '0s' },
-    gente[0] && { persona: gente[0], lugar: 1, alto: 'h-36 sm:h-44', fondo: '#f6c445', tinta: '#3f2e00', demora: '0.12s' },
-    gente[2] && { persona: gente[2], lugar: 3, alto: 'h-16 sm:h-20', fondo: '#e2a56d', tinta: '#3f2914', demora: '0.24s' },
+    gente[1] && { persona: gente[1], lugar: '2', titulo: 'Segundo', alto: 'h-28', demora: '0.05s' },
+    gente[0] && { persona: gente[0], lugar: '1', titulo: 'Primero', alto: 'h-44', demora: '0.16s', campeon: true },
+    gente[2] && { persona: gente[2], lugar: '3', titulo: 'Tercero', alto: 'h-20', demora: '0.28s' },
   ].filter(Boolean)
   const resto = gente.slice(3)
 
   return (
-    <div>
-      <style>{'@keyframes alisagro-sube{from{transform:translateY(28px);opacity:0}to{transform:none;opacity:1}}'}</style>
-      <div className="mt-6 flex items-end justify-center gap-3 sm:gap-6">
-        {columnas.map((col) => (
-          <div
-            key={col.persona.id}
-            className="flex w-24 flex-col items-center sm:w-40"
-            style={{ animation: `alisagro-sube 0.7s ease-out ${col.demora} both` }}
-          >
-            <Cara id={col.persona.avatar} grande />
-            <p className="mt-2 w-full truncate text-center text-sm font-bold sm:text-base">{col.persona.nombre}</p>
-            <p className="text-lg font-bold tabular-nums text-lime">{col.persona.puntaje}</p>
-            <div
-              className={`mt-2 flex w-full items-end justify-center rounded-t-2xl ${col.alto}`}
-              style={{ background: col.fondo, color: col.tinta }}
+    <div className="mx-auto mt-8 w-full max-w-3xl">
+      <style>{'@keyframes alisagro-sube{from{transform:translateY(36px);opacity:0}to{transform:none;opacity:1}}'}</style>
+      <div className="mx-auto w-full max-w-2xl">
+        <div className="grid grid-cols-[1fr_1.2fr_1fr] items-end gap-2 sm:gap-4">
+          {columnas.map((col) => (
+            <article
+              key={col.persona.id}
+              className="flex min-w-0 flex-col items-center"
+              style={{
+                animation: `alisagro-sube 0.65s ease-out ${col.demora} both`,
+                gridColumn: col.lugar === '2' ? 1 : col.lugar === '1' ? 2 : 3,
+              }}
             >
-              <span className="pb-3 font-display text-3xl font-bold sm:text-4xl">{col.lugar}</span>
-            </div>
-          </div>
-        ))}
+              <p className={`mb-2 text-[11px] font-bold uppercase tracking-[0.16em] ${col.campeon ? 'text-[#f6c445]' : 'text-white/45'}`}>
+                {col.titulo}
+              </p>
+              <div className={col.campeon ? 'rounded-full shadow-[0_0_36px_rgba(246,196,69,0.45)] ring-2 ring-[#f6c445]' : ''}>
+                <Cara id={col.persona.avatar} tamano={col.campeon ? 'lg' : 'md'} />
+              </div>
+              <h3 className={`mt-3 line-clamp-2 w-full px-1 text-center font-bold leading-tight ${col.campeon ? 'text-xl sm:text-2xl' : 'text-base'}`}>
+                {col.persona.nombre}
+              </h3>
+              <p className={`mt-1 font-bold tabular-nums text-lime ${col.campeon ? 'text-3xl' : 'text-xl'}`}>{col.persona.puntaje}</p>
+              <div
+                className={`mt-3 flex w-full items-center justify-center rounded-t-[28px] ${col.alto}`}
+                style={{
+                  background: col.campeon
+                    ? 'linear-gradient(180deg, #ffe7a3 0%, #e0a61a 100%)'
+                    : col.lugar === '2'
+                      ? 'linear-gradient(180deg, #f7f8fb 0%, #aeb6c2 100%)'
+                      : 'linear-gradient(180deg, #f6d2b0 0%, #c4844e 100%)',
+                  boxShadow: 'inset 0 -14px 0 rgba(0,0,0,0.14)',
+                  color: '#24180a',
+                }}
+              >
+                <span className="font-display text-5xl font-bold leading-none sm:text-6xl">{col.lugar}</span>
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className="h-4 rounded-b-3xl bg-white/15" />
       </div>
       {resto.length > 0 && (
-        <ol className="mx-auto mt-6 max-w-md space-y-2">
+        <ol className="mx-auto mt-8 max-w-md space-y-2">
           {resto.map((persona, i) => (
-            <li key={persona.id} className="flex items-center justify-between rounded-2xl bg-white/5 px-3 py-2">
-              <span className="flex min-w-0 items-center gap-2">
-                <span className="w-4 text-white/40">{i + 4}</span>
+            <li key={persona.id} className="flex items-center justify-between gap-3 rounded-2xl bg-white/5 px-4 py-3">
+              <span className="flex min-w-0 items-center gap-3">
+                <span className="w-5 text-sm text-white/40">{i + 4}</span>
                 <Cara id={persona.avatar} />
-                <span className="truncate">{persona.nombre}</span>
+                <span className="truncate font-semibold">{persona.nombre}</span>
               </span>
-              <span className="font-bold text-lime">{persona.puntaje}</span>
+              <span className="font-bold tabular-nums text-lime">{persona.puntaje}</span>
             </li>
           ))}
         </ol>
@@ -645,19 +665,28 @@ function Podio({ gente }) {
   )
 }
 
-function Cara({ id, grande = false }) {
+function Cara({ id, tamano = 'sm' }) {
   const item = avatarDe(id)
-  const caja = grande ? 'h-16 w-16 text-4xl sm:h-20 sm:w-20 sm:text-5xl' : 'h-8 w-8 text-lg'
+  const caja = {
+    sm: 'h-9 w-9 text-xl',
+    md: 'h-14 w-14 text-3xl sm:h-20 sm:w-20',
+    lg: 'h-20 w-20 text-4xl sm:h-28 sm:w-28',
+  }[tamano]
+  const imagen = {
+    sm: 'h-6 w-6',
+    md: 'h-9 w-9 sm:h-12 sm:w-12',
+    lg: 'h-12 w-12 sm:h-16 sm:w-16',
+  }[tamano]
   if (item.emoji) {
     return (
-      <span className={`grid place-items-center rounded-full bg-lime/15 ${caja}`} aria-hidden>
+      <span className={`grid place-items-center rounded-full bg-[#243018] ring-1 ring-lime/30 ${caja}`} aria-hidden>
         {item.emoji}
       </span>
     )
   }
   return (
-    <span className={`grid place-items-center overflow-hidden rounded-2xl bg-white ${caja}`} aria-hidden>
-      <img src={item.src} alt="" className={grande ? 'h-12 w-12 object-contain sm:h-14 sm:w-14' : 'h-6 w-6 object-contain'} />
+    <span className={`grid place-items-center overflow-hidden rounded-full bg-white ring-1 ring-black/10 ${caja}`} aria-hidden>
+      <img src={item.src} alt="" className={`${imagen} object-contain`} />
     </span>
   )
 }
