@@ -197,9 +197,14 @@ export default function CharlaAws() {
               </p>
             </div>
           </div>
-          <a href="/" className="text-sm font-semibold text-white/80 hover:text-lime shrink-0">
-            Volver al monitoreo
-          </a>
+          <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
+            <a href="/community-day" className="text-sm font-semibold text-lime hover:underline">
+              Modo presentación
+            </a>
+            <a href="/" className="text-sm font-semibold text-white/80 hover:text-lime">
+              Volver al monitoreo
+            </a>
+          </div>
         </div>
       </header>
 

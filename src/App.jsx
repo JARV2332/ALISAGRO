@@ -1,13 +1,14 @@
 import { lazy, Suspense, useState } from 'react'
 import CharlaAws from './components/CharlaAws.jsx'
+import CharlaPresentacion from './components/CharlaPresentacion.jsx'
+import { RetoJugador } from './components/charla/RetoSala.jsx'
 import Dashboard from './components/Dashboard.jsx'
 import OcrScanner from './components/OcrScanner.jsx'
 import VoiceCapture from './components/VoiceCapture.jsx'
 import { IconChart, IconCamera, IconLogo, IconMic, IconReport } from './components/Icons.jsx'
 
-function esPaginaAws() {
-  const ruta = window.location.pathname.replace(/\/+$/, '') || '/'
-  return ruta === '/aws'
+function rutaLimpia() {
+  return window.location.pathname.replace(/\/+$/, '') || '/'
 }
 
 const Reports = lazy(() => import('./components/Reports.jsx'))
@@ -26,7 +27,15 @@ const PILARES = [
 ]
 
 export default function App() {
-  if (esPaginaAws()) return <CharlaAws />
+  const ruta = rutaLimpia()
+  if (ruta === '/aws') return <CharlaAws />
+  if (ruta === '/community-day') {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('reto') === '1' || params.get('sala')) {
+      return <RetoJugador codigoInicial={params.get('sala') || ''} />
+    }
+    return <CharlaPresentacion />
+  }
   return <Aplicacion />
 }
 
