@@ -30,3 +30,9 @@ dist-ssr
 assets
 
 .vercel
+
+# Demo AWS: certificados, Wi-Fi y claves del Wemos
+hardware/wemos-d1-mini/secrets.h
+hardware/wemos-d1-mini/certs/
+edge/venv/
+edge/out/

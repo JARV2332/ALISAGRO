@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  ALISAGRO demo AWS Community Day. IoT Core recibe la telemetría del Wemos,
+  una regla la entrega a Lambda y Lambda la escribe en Supabase.
+  Región prevista: us-east-1. Borrar con: sam delete --stack-name alisagro-aws-demo --region us-east-1
+
+Parameters:
+  SupabaseUrl:
+    Type: String
+    Description: URL del proyecto Supabase, sin barra final.
+  SupabaseKey:
+    Type: String
+    NoEcho: true
+    Description: Clave publishable o anon. No commitear este valor.
+  SupabaseTable:
+    Type: String
+    Default: ali_lecturas_aws_demo
+
+Resources:
+  IngestLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/alisagro-demo-ingest
+      RetentionInDays: 7
+
+  IngestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: alisagro-demo-ingest
+      Description: Valida la telemetría de alisagro-01 y la inserta en Supabase.
+      CodeUri: ../lambda/ingest/
+      Handler: index.handler
+      Runtime: nodejs22.x
+      Architectures:
+        - arm64
+      Timeout: 10
+      MemorySize: 128
+      LoggingConfig:
+        LogGroup: !Ref IngestLogGroup
+      Environment:
+        Variables:
+          SUPABASE_URL: !Ref SupabaseUrl
+          SUPABASE_KEY: !Ref SupabaseKey
+          SUPABASE_TABLE: !Ref SupabaseTable
+      Events:
+        Telemetry:
+          Type: IoTRule
+          Properties:
+            Sql: "SELECT * FROM 'alisagro/demo/alisagro-01/telemetry'"
+            AwsIotSqlVersion: '2016-03-23'
+
+Outputs:
+  FunctionName:
+    Value: !Ref IngestFunction
+  Topic:
+    Value: alisagro/demo/alisagro-01/telemetry
+  LogGroup:
+    Value: !Ref IngestLogGroup

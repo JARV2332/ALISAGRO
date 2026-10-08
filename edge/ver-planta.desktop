@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Ver planta
+Comment=Vista en vivo de la webcam
+Exec=/home/jarv/alisagro-edge/ver-planta.sh
+Icon=camera
+Terminal=false
+Categories=Utility;

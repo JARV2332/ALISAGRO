@@ -1,0 +1,10 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "alisagro-aws-demo"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+resolve_s3 = true
+# La clave se pasa en el momento del deploy, no se guarda aquí:
+# parameter_overrides = "SupabaseUrl=\"https://TU_PROYECTO.supabase.co\" SupabaseKey=\"TU_CLAVE\" SupabaseTable=\"ali_lecturas_aws_demo\""

@@ -1,5 +1,10 @@
-/** Tabla Supabase con prefijo Ali (no colisiona con tablas previas del proyecto) */
-export const ALI_TABLA_LECTURAS = 'ali_lecturas_monitoreo'
+/** Tabla Supabase con prefijo Ali (no colisiona con tablas previas del proyecto).
+ *  Producción no define VITE_ALI_TABLA_LECTURAS y sigue en ali_lecturas_monitoreo.
+ *  La demo AWS usa ali_lecturas_aws_demo. */
+export const ALI_TABLA_LECTURAS =
+  import.meta.env.VITE_ALI_TABLA_LECTURAS || 'ali_lecturas_monitoreo'
+/** Solo la página /aws. El inicio no la usa. */
+export const ALI_TABLA_DEMO_AWS = 'ali_lecturas_aws_demo'
 export const ALI_TABLA_NODOS = 'ali_nodos'
 
 export const ALI_DEVICE_OCR = 'PANTALLA_OCR_MANUAL'
@@ -33,5 +38,13 @@ export const ALI_NODOS_FALLBACK = {
     finca: 'Finca El Retiro',
     cultivo: null,
     notas: 'Solo temperatura y humedad ambiente',
+  },
+  'alisagro-01': {
+    nombre: 'Nodo demo AWS',
+    parcela: 'Mesa de la charla',
+    ubicacion: 'Wemos D1 Mini',
+    finca: 'AWS Community Day',
+    cultivo: 'Planta de demostración',
+    notas: 'Telemetría por AWS IoT Core',
   },
 }

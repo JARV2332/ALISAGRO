@@ -1,8 +1,14 @@
 import { lazy, Suspense, useState } from 'react'
+import CharlaAws from './components/CharlaAws.jsx'
 import Dashboard from './components/Dashboard.jsx'
 import OcrScanner from './components/OcrScanner.jsx'
 import VoiceCapture from './components/VoiceCapture.jsx'
 import { IconChart, IconCamera, IconLogo, IconMic, IconReport } from './components/Icons.jsx'
+
+function esPaginaAws() {
+  const ruta = window.location.pathname.replace(/\/+$/, '') || '/'
+  return ruta === '/aws'
+}
 
 const Reports = lazy(() => import('./components/Reports.jsx'))
 
@@ -20,6 +26,11 @@ const PILARES = [
 ]
 
 export default function App() {
+  if (esPaginaAws()) return <CharlaAws />
+  return <Aplicacion />
+}
+
+function Aplicacion() {
   const [tab, setTab] = useState('dashboard')
 
   return (

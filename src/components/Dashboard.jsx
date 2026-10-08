@@ -177,8 +177,23 @@ function DatoUbicacion({ etiqueta, valor, icono: Icono, wide = false }) {
   )
 }
 
-function FichaNodo({ nodo, deviceId, metodo, ultimaLectura }) {
+function estadoDispositivo(iso, ahora) {
+  const edad = iso ? ahora - new Date(iso).getTime() : Number.POSITIVE_INFINITY
+  if (edad <= 3 * 60 * 1000) {
+    return {
+      etiqueta: 'En línea',
+      clase: 'bg-lime/12 text-lime ring-lime/25',
+    }
+  }
+  return {
+    etiqueta: 'Sin señal reciente',
+    clase: 'bg-amber-500/15 text-amber-200 ring-amber-500/30',
+  }
+}
+
+function FichaNodo({ nodo, deviceId, metodo, ultimaLectura, ahora }) {
   if (!nodo && !deviceId) return null
+  const estado = estadoDispositivo(ultimaLectura, ahora)
 
   const nombre = nodo?.nombre ?? deviceId
   const parcela = nodo?.parcela
@@ -197,8 +212,8 @@ function FichaNodo({ nodo, deviceId, metodo, ultimaLectura }) {
 
             <div className="ficha-nodo__title-block">
               <div className="ficha-nodo__badges">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-lime/12 text-lime px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ring-1 ring-lime/25">
-                  Nodo activo
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ring-1 ${estado.clase}`}>
+                  {estado.etiqueta}
                 </span>
                 {metodo && <BadgeMetodo metodo={metodo} />}
               </div>
@@ -295,6 +310,7 @@ export default function Dashboard() {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
   const [conectadoRealtime, setConectadoRealtime] = useState(false)
+  const [ahora, setAhora] = useState(() => Date.now())
 
   const resolverNodo = useCallback((deviceId, filaDb) => {
     if (filaDb) return filaDb
@@ -390,6 +406,11 @@ export default function Dashboard() {
   }, [cargarInicial])
 
   useEffect(() => {
+    const id = setInterval(() => setAhora(Date.now()), 30000)
+    return () => clearInterval(id)
+  }, [])
+
+  useEffect(() => {
     const canal = supabase
       .channel('alisagro-lecturas-realtime')
       .on(
@@ -480,7 +501,9 @@ export default function Dashboard() {
           </div>
           <p className="font-display text-xl font-bold text-white">Sin lecturas aún</p>
           <p className="text-dark-muted mt-2 max-w-sm mx-auto text-sm leading-relaxed">
-            Enciende el nodo ESP32 o registra una captura OCR. Los datos aparecerán aquí al instante.
+            {TABLA === 'ali_lecturas_monitoreo'
+              ? 'Enciende el nodo ESP32 o registra una captura OCR. Los datos aparecerán aquí al instante.'
+              : 'La demo AWS escribe en la tabla de ensayo. Enciende el Wemos o usa el publicador de respaldo.'}
           </p>
         </div>
       )}
@@ -492,6 +515,7 @@ export default function Dashboard() {
             deviceId={ultima.device_id}
             metodo={ultima.metodo_captura}
             ultimaLectura={ultima.created_at}
+            ahora={ahora}
           />
 
           <section className="metrics-bento" aria-label="Métricas actuales">
