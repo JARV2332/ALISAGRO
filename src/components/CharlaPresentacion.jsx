@@ -97,7 +97,7 @@ export default function CharlaPresentacion() {
   return (
     <div className="flex h-dvh overflow-hidden bg-[#0e0e0e] text-white">
       <aside
-        className={`absolute inset-y-0 left-0 z-30 w-72 border-r border-white/10 bg-[#141414] p-4 transition lg:static lg:translate-x-0 ${
+        className={`absolute inset-y-0 left-0 z-30 w-72 border-r border-white/10 bg-[#141414] p-4 transition ${
           menu ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -133,7 +133,7 @@ export default function CharlaPresentacion() {
       {menu && (
         <button
           type="button"
-          className="absolute inset-0 z-20 bg-black/50 lg:hidden"
+          className="absolute inset-0 z-20 bg-black/50"
           aria-label="Cerrar menú"
           onClick={() => setMenu(false)}
         />
@@ -144,7 +144,7 @@ export default function CharlaPresentacion() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              className="rounded-lg border border-white/15 px-2 py-1 text-sm lg:hidden"
+              className="rounded-lg border border-white/15 px-2 py-1 text-sm"
               onClick={() => setMenu(true)}
               aria-label="Abrir secciones"
             >

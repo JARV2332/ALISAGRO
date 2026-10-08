@@ -61,7 +61,7 @@ function useSala(codigo) {
         .eq('sala_id', data.id),
       supabase
         .from('ali_reto_respuesta')
-        .select('jugador_id, opcion')
+        .select('jugador_id, opcion, puntos, acierto')
         .eq('sala_id', data.id)
         .eq('indice', data.indice),
     ])
@@ -280,6 +280,9 @@ export function RetoAnfitrion() {
               </p>
             </div>
             <Cuenta segundos={sala.estado === 'pregunta' ? segundos : 0} />
+            <p className="mt-2 text-sm text-white/60">
+              8 segundos. Acertar al instante vale 1000. Si esperas, baja hasta 500. Fallar vale 0.
+            </p>
             {sala.estado === 'pregunta' && segundos === 0 && (
               <p className="mt-2 text-sm font-bold text-amber-200">Se acabó el tiempo</p>
             )}
@@ -341,14 +344,17 @@ export function RetoAnfitrion() {
           ) : (
             <ul className="mt-3 space-y-2">
               {gente.map((persona) => {
-                const ya = respuestas.some((r) => r.jugador_id === persona.id)
+                const hecha = respuestas.find((r) => r.jugador_id === persona.id)
                 return (
                   <li key={persona.id} className="flex items-center justify-between gap-3 text-sm">
                     <span className="flex items-center gap-2">
-                      <span className={`h-2.5 w-2.5 rounded-full ${ya ? 'bg-lime' : 'bg-white/20'}`} />
+                      <span className={`h-2.5 w-2.5 rounded-full ${hecha ? 'bg-lime' : 'bg-white/20'}`} />
                       {persona.nombre}
                     </span>
-                    <span className="font-bold tabular-nums text-lime">{persona.puntaje}</span>
+                    <span className="font-bold tabular-nums text-lime">
+                      {sala?.estado === 'revelada' && hecha ? `+${hecha.puntos} · ` : ''}
+                      {persona.puntaje}
+                    </span>
                   </li>
                 )
               })}
@@ -497,9 +503,26 @@ export function RetoJugador({ codigoInicial }) {
         {yo && (sala?.estado === 'pregunta' || sala?.estado === 'revelada') && pregunta && (
           <div className="mt-6">
             <Cuenta segundos={sala.estado === 'pregunta' ? segundos : 0} />
+            <p className="mt-2 text-sm text-white/60">
+              8 segundos. Acertar al instante vale 1000. Si esperas, baja hasta 500. Fallar vale 0.
+            </p>
             <p className="mt-4 font-display text-2xl font-bold leading-snug">{pregunta.texto}</p>
             {mia && sala.estado === 'pregunta' && (
-              <p className="mt-3 text-sm font-bold text-lime">Respuesta enviada</p>
+              <p className="mt-3 text-sm font-bold text-lime">Respuesta enviada. El puntaje se ve al revelar.</p>
+            )}
+            {sala.estado === 'revelada' && (
+              <p className="mt-4 text-center">
+                <span className="font-display text-5xl font-bold text-lime">+{mia?.puntos ?? 0}</span>
+                <span className="mt-2 block text-base text-white/80">
+                  {mia?.acierto
+                    ? mia.puntos >= 1000
+                      ? 'Al instante. Puntos completos.'
+                      : 'Correcta. Mientras más tardaste, menos puntos.'
+                    : mia
+                      ? 'Incorrecta. Esta no suma.'
+                      : 'Se acabó el tiempo. Esta no suma.'}
+                </span>
+              </p>
             )}
             <Opciones
               pregunta={pregunta}
@@ -513,7 +536,7 @@ export function RetoJugador({ codigoInicial }) {
         {yo && sala?.estado === 'fin' && (
           <div className="mt-8">
             <p className="text-center font-display text-4xl font-bold text-lime">
-              {gente.find((p) => p.id === yo.id)?.puntaje ?? 0} / {sala.mazo.length}
+              {gente.find((p) => p.id === yo.id)?.puntaje ?? 0} puntos
             </p>
             <Podio gente={gente} />
           </div>
@@ -537,7 +560,7 @@ function Podio({ gente }) {
             <span className="mr-3 text-white/40">{i + 1}</span>
             {persona.nombre}
           </span>
-          <span className="font-bold text-lime">{persona.puntaje}/5</span>
+          <span className="font-bold text-lime">{persona.puntaje}</span>
         </li>
       ))}
     </ol>
@@ -546,9 +569,9 @@ function Podio({ gente }) {
 
 function Cuenta({ segundos }) {
   const ratio = Math.max(0, Math.min(1, segundos / SEGUNDOS_PREGUNTA))
-  const urgente = segundos <= 5
-  const tono = urgente ? 'text-red-300 border-red-400' : segundos <= 10 ? 'text-amber-200 border-amber-300' : 'text-white border-lime'
-  const barra = urgente ? 'bg-red-400' : segundos <= 10 ? 'bg-amber-300' : 'bg-lime'
+  const urgente = segundos <= 3
+  const tono = urgente ? 'text-red-300 border-red-400' : segundos <= 5 ? 'text-amber-200 border-amber-300' : 'text-white border-lime'
+  const barra = urgente ? 'bg-red-400' : segundos <= 5 ? 'bg-amber-300' : 'bg-lime'
   return (
     <div className="mt-4 flex items-center gap-4">
       <div className={`grid h-16 w-16 shrink-0 place-items-center rounded-full border-4 font-display text-3xl font-bold tabular-nums ${tono}`}>

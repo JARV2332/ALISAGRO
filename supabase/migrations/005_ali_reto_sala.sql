@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS public.ali_reto_jugador (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   sala_id UUID NOT NULL REFERENCES public.ali_reto_sala (id) ON DELETE CASCADE,
   nombre TEXT NOT NULL CHECK (char_length(nombre) BETWEEN 1 AND 24),
-  puntaje SMALLINT NOT NULL DEFAULT 0 CHECK (puntaje BETWEEN 0 AND 5)
+  puntaje SMALLINT NOT NULL DEFAULT 0 CHECK (puntaje BETWEEN 0 AND 5000)
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS ali_reto_jugador_apodo
@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS public.ali_reto_respuesta (
   indice SMALLINT NOT NULL,
   opcion SMALLINT NOT NULL,
   acierto BOOLEAN NOT NULL DEFAULT FALSE,
+  puntos SMALLINT NOT NULL DEFAULT 0,
   UNIQUE (jugador_id, indice)
 );
 
@@ -100,9 +101,12 @@ DECLARE
   estado_sala TEXT;
   indice_sala INT;
   correcta INT;
+  empieza TIMESTAMPTZ;
+  tardanza NUMERIC;
+  ganados INT;
 BEGIN
-  SELECT s.estado, s.indice, (s.clave ->> NEW.indice)::INT
-  INTO estado_sala, indice_sala, correcta
+  SELECT s.estado, s.indice, (s.clave ->> NEW.indice)::INT, s.pregunta_empieza
+  INTO estado_sala, indice_sala, correcta, empieza
   FROM public.ali_reto_sala s
   WHERE s.id = NEW.sala_id;
 
@@ -118,9 +122,17 @@ BEGIN
   END IF;
 
   NEW.acierto := NEW.opcion = correcta;
+  ganados := 0;
   IF NEW.acierto THEN
+    tardanza := EXTRACT(EPOCH FROM (clock_timestamp() - COALESCE(empieza, clock_timestamp())));
+    IF tardanza < 0 THEN tardanza := 0; END IF;
+    IF tardanza > 8 THEN tardanza := 8; END IF;
+    ganados := ROUND((1 - ((tardanza / 8.0) / 2.0)) * 1000);
+  END IF;
+  NEW.puntos := ganados;
+  IF ganados > 0 THEN
     UPDATE public.ali_reto_jugador
-    SET puntaje = LEAST(5, puntaje + 1)
+    SET puntaje = LEAST(5000, puntaje + ganados)
     WHERE id = NEW.jugador_id;
   END IF;
   RETURN NEW;

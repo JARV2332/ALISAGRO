@@ -1,4 +1,5 @@
-export const SEGUNDOS_PREGUNTA = 20
+export const SEGUNDOS_PREGUNTA = 8
+export const PUNTOS_COMPLETOS = 1000
 
 export const COLORES_RETO = ['bg-[#e21b3c]', 'bg-[#1368ce]', 'bg-[#d89e00]', 'bg-[#26890c]']
 export const FORMAS_RETO = ['▲', '◆', '●', '■']
