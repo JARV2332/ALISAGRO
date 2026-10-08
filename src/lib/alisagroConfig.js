@@ -8,8 +8,10 @@ export const ALI_TABLA_DEMO_AWS = 'ali_lecturas_aws_demo'
 export const ALI_TABLA_NODOS = 'ali_nodos'
 
 export const ALI_DEVICE_OCR = 'PANTALLA_OCR_MANUAL'
+export const ALI_DEVICE_DEMO_CLIMA = 'nodo-demo-z4-guatemala'
 export const ALI_METODO_IOT = 'IOT'
 export const ALI_METODO_OCR = 'OCR_MANUAL'
+export const ALI_METODO_DEMO = 'DEMO_CLIMA'
 
 /** Sensores / variables disponibles en reportes y gráficas */
 export const ALI_METRICAS = [
@@ -46,5 +48,13 @@ export const ALI_NODOS_FALLBACK = {
     finca: 'AWS Community Day',
     cultivo: 'Planta de demostración',
     notas: 'Telemetría por AWS IoT Core',
+  },
+  [ALI_DEVICE_DEMO_CLIMA]: {
+    nombre: 'Demo clima — Zona 4',
+    parcela: 'Zona 4',
+    ubicacion: 'Ciudad de Guatemala',
+    finca: 'Datos meteorológicos públicos',
+    cultivo: null,
+    notas: 'Clima real de Open-Meteo; valores de suelo estimados para demostración',
   },
 }
