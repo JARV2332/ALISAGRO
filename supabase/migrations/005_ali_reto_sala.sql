@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS public.ali_reto_jugador (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   sala_id UUID NOT NULL REFERENCES public.ali_reto_sala (id) ON DELETE CASCADE,
   nombre TEXT NOT NULL CHECK (char_length(nombre) BETWEEN 1 AND 24),
+  avatar TEXT NOT NULL DEFAULT 'brote',
   puntaje SMALLINT NOT NULL DEFAULT 0 CHECK (puntaje BETWEEN 0 AND 5000)
 );
 

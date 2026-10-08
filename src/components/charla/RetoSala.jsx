@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient.js'
 import {
   armarMazo,
+  avatarDe,
+  AVATARES,
   codigoSala,
   COLORES_RETO,
   faltaLaSala,
@@ -54,18 +56,22 @@ function useSala(codigo) {
       setCargada(true)
       return
     }
-    const [{ data: gente }, { data: hechas }] = await Promise.all([
-      supabase
+    let genteRes = await supabase
+      .from('ali_reto_jugador')
+      .select('id, nombre, avatar, puntaje, created_at')
+      .eq('sala_id', data.id)
+    if (genteRes.error && /avatar/i.test(genteRes.error.message || '')) {
+      genteRes = await supabase
         .from('ali_reto_jugador')
         .select('id, nombre, puntaje, created_at')
-        .eq('sala_id', data.id),
-      supabase
-        .from('ali_reto_respuesta')
-        .select('jugador_id, opcion, puntos, acierto')
         .eq('sala_id', data.id)
-        .eq('indice', data.indice),
-    ])
-    setJugadores(gente ?? [])
+    }
+    const { data: hechas } = await supabase
+      .from('ali_reto_respuesta')
+      .select('jugador_id, opcion, puntos, acierto')
+      .eq('sala_id', data.id)
+      .eq('indice', data.indice)
+    setJugadores(genteRes.data ?? [])
     setRespuestas(hechas ?? [])
     if (data.estado === 'revelada' || data.estado === 'fin') {
       const { data: n } = await supabase.rpc('ali_reto_correcta', { p_codigo: codigo })
@@ -230,7 +236,7 @@ export function RetoAnfitrion() {
   }
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1.3fr_0.7fr]">
+    <div className={`mx-auto grid max-w-6xl gap-6 ${sala?.estado === 'fin' ? '' : 'lg:grid-cols-[1.3fr_0.7fr]'}`}>
       <div>
         <p className="text-sm font-bold uppercase tracking-[0.16em] text-lime">Anfitrión</p>
         <h2 className="mt-1 font-display text-4xl font-bold tracking-widest">{codigo}</h2>
@@ -312,15 +318,24 @@ export function RetoAnfitrion() {
         )}
 
         {sala?.estado === 'fin' && (
-          <div className="mt-6">
-            <p className="font-display text-3xl font-bold">Resultados</p>
+          <div className="mt-2">
+            <p className="text-center text-sm font-bold uppercase tracking-[0.18em] text-lime">El podio</p>
             <Podio gente={gente} />
-            <button type="button" className="btn-primary mt-5" onClick={otraVez}>
-              Jugar otra vez
-            </button>
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
+              <button type="button" className="btn-primary" onClick={otraVez}>
+                Jugar otra vez
+              </button>
+              <button type="button" className="btn-secondary" onClick={limpiar}>
+                Eliminar resultados
+              </button>
+              <button type="button" className="btn-secondary" onClick={cerrar}>
+                Cerrar sala
+              </button>
+            </div>
           </div>
         )}
 
+        {sala?.estado !== 'fin' && (
         <div className="mt-6 flex flex-wrap gap-2">
           <button type="button" className="btn-secondary" onClick={limpiar}>
             Eliminar resultados
@@ -329,8 +344,10 @@ export function RetoAnfitrion() {
             Cerrar sala
           </button>
         </div>
+        )}
       </div>
 
+      {sala?.estado !== 'fin' && (
       <aside className="space-y-4">
         <div className="rounded-3xl bg-white p-4 text-neutral-900">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-neutral-500">Entren con el teléfono</p>
@@ -348,6 +365,7 @@ export function RetoAnfitrion() {
                 return (
                   <li key={persona.id} className="flex items-center justify-between gap-3 text-sm">
                     <span className="flex items-center gap-2">
+                      <Cara id={persona.avatar} />
                       <span className={`h-2.5 w-2.5 rounded-full ${hecha ? 'bg-lime' : 'bg-white/20'}`} />
                       {persona.nombre}
                     </span>
@@ -362,6 +380,7 @@ export function RetoAnfitrion() {
           )}
         </div>
       </aside>
+      )}
     </div>
   )
 }
@@ -371,6 +390,7 @@ export function RetoJugador({ codigoInicial }) {
   const [buscando, setBuscando] = useState(!codigoInicial)
   const [yo, setYo] = useState(null)
   const [apodo, setApodo] = useState('')
+  const [avatar, setAvatar] = useState('brote')
   const [aviso, setAviso] = useState('')
   const [enviando, setEnviando] = useState(false)
   const { sala, jugadores, respuestas, correcta, error, segundos, cargada } = useSala(codigo)
@@ -422,15 +442,17 @@ export function RetoJugador({ codigoInicial }) {
     setEnviando(true)
     const { data, error: err } = await supabase
       .from('ali_reto_jugador')
-      .insert({ sala_id: sala.id, nombre })
-      .select('id, nombre')
+      .insert({ sala_id: sala.id, nombre, avatar })
+      .select('id, nombre, avatar')
       .single()
     setEnviando(false)
     if (!data) {
-      setAviso(err?.code === '23505' ? 'Ese apodo ya está. Prueba con otro.' : 'Entra mientras la sala está en espera.')
+      const texto = `${err?.code || ''} ${err?.message || ''}`
+      if (texto.includes('avatar')) setAviso('falta-avatar')
+      else setAviso(err?.code === '23505' ? 'Ese apodo ya está. Prueba con otro.' : 'Entra mientras la sala está en espera.')
       return
     }
-    guardarJugador({ codigo: sala.codigo, id: data.id, nombre: data.nombre })
+    guardarJugador({ codigo: sala.codigo, id: data.id, nombre: data.nombre, avatar: data.avatar })
     setYo(data)
     setAviso('')
   }
@@ -464,7 +486,12 @@ export function RetoJugador({ codigoInicial }) {
 
         {buscando && <p className="mt-10 text-center text-lg text-white/70">Buscando la sala…</p>}
         {aviso === 'falta-sql' && <AvisoSql />}
-        {aviso && aviso !== 'falta-sql' && <p className="mt-4 text-center text-amber-200">{aviso}</p>}
+        {aviso === 'falta-avatar' && (
+          <p className="mt-4 rounded-2xl bg-amber-300/10 px-4 py-3 text-sm leading-relaxed text-amber-100">
+            En Supabase, SQL Editor, corre supabase/migrations/007_ali_reto_avatar.sql para poder elegir avatar.
+          </p>
+        )}
+        {aviso && aviso !== 'falta-sql' && aviso !== 'falta-avatar' && <p className="mt-4 text-center text-amber-200">{aviso}</p>}
         {error && faltaLaSala(error) && <AvisoSql />}
 
         {!buscando && sala && !yo && sala.estado === 'lobby' && (
@@ -480,6 +507,24 @@ export function RetoJugador({ codigoInicial }) {
               placeholder="Cómo te ven en la pantalla"
               onChange={(evento) => setApodo(evento.target.value)}
             />
+            <p className="mt-5 text-sm font-semibold text-white/70">Elige tu avatar</p>
+            <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-6">
+              {AVATARES.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-label={item.etiqueta}
+                  aria-pressed={avatar === item.id}
+                  onClick={() => setAvatar(item.id)}
+                  className={`grid aspect-square place-items-center rounded-2xl bg-white/5 ring-2 transition ${
+                    avatar === item.id ? 'ring-lime bg-lime/15' : 'ring-transparent hover:bg-white/10'
+                  }`}
+                >
+                  <Cara id={item.id} />
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-center text-sm text-white/60">{avatarDe(avatar).etiqueta}</p>
             <button type="submit" className="btn-primary mt-4 w-full py-4 text-lg" disabled={enviando}>
               Entrar
             </button>
@@ -492,7 +537,8 @@ export function RetoJugador({ codigoInicial }) {
 
         {yo && sala?.estado === 'lobby' && (
           <div className="mt-16 text-center">
-            <p className="font-display text-4xl font-bold">{yo.nombre}</p>
+            <Cara id={yo.avatar} grande />
+            <p className="mt-4 font-display text-4xl font-bold">{yo.nombre}</p>
             <p className="mt-4 text-xl text-white/75">Ya estás dentro. Esperando a que inicie.</p>
             <button type="button" className="btn-secondary mt-8" onClick={salir}>
               Salir
@@ -551,19 +597,68 @@ export function RetoJugador({ codigoInicial }) {
 }
 
 function Podio({ gente }) {
-  if (gente.length === 0) return <p className="mt-4 text-white/70">Nadie jugó esta vez.</p>
+  if (gente.length === 0) return <p className="mt-4 text-center text-white/70">Nadie jugó esta vez.</p>
+  const columnas = [
+    gente[1] && { persona: gente[1], lugar: 2, alto: 'h-24 sm:h-28', fondo: '#d5dbe3', tinta: '#1f2937', demora: '0s' },
+    gente[0] && { persona: gente[0], lugar: 1, alto: 'h-36 sm:h-44', fondo: '#f6c445', tinta: '#3f2e00', demora: '0.12s' },
+    gente[2] && { persona: gente[2], lugar: 3, alto: 'h-16 sm:h-20', fondo: '#e2a56d', tinta: '#3f2914', demora: '0.24s' },
+  ].filter(Boolean)
+  const resto = gente.slice(3)
+
   return (
-    <ol className="mt-4 space-y-2">
-      {gente.map((persona, i) => (
-        <li key={persona.id} className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
-          <span>
-            <span className="mr-3 text-white/40">{i + 1}</span>
-            {persona.nombre}
-          </span>
-          <span className="font-bold text-lime">{persona.puntaje}</span>
-        </li>
-      ))}
-    </ol>
+    <div>
+      <style>{'@keyframes alisagro-sube{from{transform:translateY(28px);opacity:0}to{transform:none;opacity:1}}'}</style>
+      <div className="mt-6 flex items-end justify-center gap-3 sm:gap-6">
+        {columnas.map((col) => (
+          <div
+            key={col.persona.id}
+            className="flex w-24 flex-col items-center sm:w-40"
+            style={{ animation: `alisagro-sube 0.7s ease-out ${col.demora} both` }}
+          >
+            <Cara id={col.persona.avatar} grande />
+            <p className="mt-2 w-full truncate text-center text-sm font-bold sm:text-base">{col.persona.nombre}</p>
+            <p className="text-lg font-bold tabular-nums text-lime">{col.persona.puntaje}</p>
+            <div
+              className={`mt-2 flex w-full items-end justify-center rounded-t-2xl ${col.alto}`}
+              style={{ background: col.fondo, color: col.tinta }}
+            >
+              <span className="pb-3 font-display text-3xl font-bold sm:text-4xl">{col.lugar}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      {resto.length > 0 && (
+        <ol className="mx-auto mt-6 max-w-md space-y-2">
+          {resto.map((persona, i) => (
+            <li key={persona.id} className="flex items-center justify-between rounded-2xl bg-white/5 px-3 py-2">
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="w-4 text-white/40">{i + 4}</span>
+                <Cara id={persona.avatar} />
+                <span className="truncate">{persona.nombre}</span>
+              </span>
+              <span className="font-bold text-lime">{persona.puntaje}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  )
+}
+
+function Cara({ id, grande = false }) {
+  const item = avatarDe(id)
+  const caja = grande ? 'h-16 w-16 text-4xl sm:h-20 sm:w-20 sm:text-5xl' : 'h-8 w-8 text-lg'
+  if (item.emoji) {
+    return (
+      <span className={`grid place-items-center rounded-full bg-lime/15 ${caja}`} aria-hidden>
+        {item.emoji}
+      </span>
+    )
+  }
+  return (
+    <span className={`grid place-items-center overflow-hidden rounded-2xl bg-white ${caja}`} aria-hidden>
+      <img src={item.src} alt="" className={grande ? 'h-12 w-12 object-contain sm:h-14 sm:w-14' : 'h-6 w-6 object-contain'} />
+    </span>
   )
 }
 

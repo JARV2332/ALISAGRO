@@ -4,6 +4,29 @@ export const PUNTOS_COMPLETOS = 1000
 export const COLORES_RETO = ['bg-[#e21b3c]', 'bg-[#1368ce]', 'bg-[#d89e00]', 'bg-[#26890c]']
 export const FORMAS_RETO = ['▲', '◆', '●', '■']
 
+export const AVATARES = [
+  { id: 'brote', etiqueta: 'Brote', emoji: '🌱' },
+  { id: 'hoja', etiqueta: 'Hoja', emoji: '🌿' },
+  { id: 'cactus', etiqueta: 'Cactus', emoji: '🌵' },
+  { id: 'flor', etiqueta: 'Flor', emoji: '🌸' },
+  { id: 'maceta', etiqueta: 'Maceta', emoji: '🪴' },
+  { id: 'trigo', etiqueta: 'Trigo', emoji: '🌾' },
+  { id: 'iot', etiqueta: 'IoT Core', src: '/charla/iot-core.svg' },
+  { id: 'lambda', etiqueta: 'Lambda', src: '/charla/lambda.svg' },
+  { id: 's3', etiqueta: 'S3', src: '/charla/s3.svg' },
+  { id: 'cloudwatch', etiqueta: 'CloudWatch', src: '/charla/cloudwatch.svg' },
+  { id: 'iam', etiqueta: 'IAM', src: '/charla/iam.svg' },
+  { id: 'react', etiqueta: 'React', src: '/charla/react.svg', claro: true },
+  { id: 'supabase', etiqueta: 'Supabase', src: '/charla/supabase.svg', claro: true },
+  { id: 'raspberry', etiqueta: 'Raspberry', src: '/charla/raspberrypi.svg', claro: true },
+  { id: 'python', etiqueta: 'Python', src: '/charla/python.svg', claro: true },
+  { id: 'arduino', etiqueta: 'Arduino', src: '/charla/arduino.svg', claro: true },
+]
+
+export function avatarDe(id) {
+  return AVATARES.find((item) => item.id === id) || AVATARES[0]
+}
+
 const PREGUNTAS = [
   {
     texto: '¿Qué servicio recibe los datos del dispositivo?',
