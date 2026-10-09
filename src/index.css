@@ -918,3 +918,66 @@
     color: #9ca3af;
   }
 }
+
+/* Página /aws: entrada, pulso y el dato recorriendo el camino */
+@keyframes aws-entra {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes aws-recorre {
+  from { left: 0; }
+  to { left: calc(100% - 10px); }
+}
+
+@keyframes aws-baja {
+  from { top: 0; }
+  to { top: calc(100% - 10px); }
+}
+
+@keyframes aws-late {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(164 198 57 / 0.45); }
+  70% { box-shadow: 0 0 0 8px rgb(164 198 57 / 0); }
+}
+
+.aws-oculto {
+  opacity: 0;
+  transform: translateY(18px);
+}
+
+.aws-visible {
+  animation: aws-entra 0.7s ease both;
+}
+
+.aws-punto-x {
+  animation: aws-recorre 4.8s linear infinite;
+}
+
+.aws-punto-y {
+  animation: aws-baja 4.8s linear infinite;
+}
+
+.aws-pulso {
+  animation: aws-late 1.8s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aws-oculto,
+  .aws-visible {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+
+  .aws-punto-x,
+  .aws-punto-y,
+  .aws-pulso {
+    animation: none;
+  }
+}

@@ -224,6 +224,8 @@ class EnVivo:
             "fps": 0.0,
             "lista": False,
             "error": "",
+            "envio": "Envío detenido. No se suben fotos.",
+            "enviando": False,
         }
         self.clientes = 0
         self.proceso: subprocess.Popen | None = None
@@ -233,7 +235,11 @@ en_vivo = EnVivo()
 detener = threading.Event()
 BUCKET_FOTO = os.environ.get("ALISAGRO_FOTO_BUCKET", "").strip()
 CADA_FOTO = max(15, int(os.environ.get("ALISAGRO_FOTO_CADA", "60") or "60"))
-envio_estado = {"texto": ""}
+envio_estado = {
+    "texto": "Envío detenido. No se suben fotos.",
+    "activo": False,
+    "ultimo": 0.0,
+}
 
 
 def cargar_bucket() -> None:
@@ -301,11 +307,34 @@ def enviar_actual() -> str:
     return texto_estado
 
 
+def fijar_envio(activo: bool) -> str:
+    if activo:
+        cargar_bucket()
+        if not BUCKET_FOTO:
+            envio_estado["activo"] = False
+            texto = "Falta configurar el bucket de fotos."
+        else:
+            envio_estado["activo"] = True
+            envio_estado["ultimo"] = time.time()
+            texto = "Envío activo. Una foto cada minuto."
+            threading.Thread(target=enviar_actual, daemon=True).start()
+    else:
+        envio_estado["activo"] = False
+        texto = "Envío detenido. No se suben fotos."
+    envio_estado["texto"] = texto
+    with en_vivo.lock:
+        en_vivo.datos["envio"] = texto
+        en_vivo.datos["enviando"] = envio_estado["activo"]
+    return texto
+
+
 def bucle_envio() -> None:
-    if detener.wait(12):
-        return
-    enviar_actual()
-    while not detener.wait(CADA_FOTO):
+    while not detener.wait(1):
+        if not envio_estado["activo"]:
+            continue
+        if time.time() - envio_estado["ultimo"] < CADA_FOTO:
+            continue
+        envio_estado["ultimo"] = time.time()
         enviar_actual()
 
 
@@ -643,11 +672,12 @@ HTML = """<!DOCTYPE html>
         <div class="pista"><div class="lleno seco" id="seco-barra"></div></div>
       </div>
       <p class="nota">Primero marca la planta, en la parcela o en la maceta, y mide solo esa zona. No dice el nombre ni diagnostica una enfermedad.</p>
-      <p class="nota" id="envio"></p>
+      <p class="nota" id="envio">Envío detenido. No se suben fotos.</p>
       <div class="pie">
         <span id="ritmo"></span>
         <span>
-          <button type="button" id="enviar">Enviar foto a AWS</button>
+          <button type="button" id="toggle">Reanudar envío</button>
+          <button type="button" id="enviar">Enviar una foto</button>
           <button type="button" id="completa">Pantalla completa</button>
         </span>
       </div>
@@ -677,6 +707,7 @@ async function tick() {
       return;
     }
     document.getElementById("ritmo").textContent = datos.fps > 0 ? Math.round(datos.fps) + " img/s" : "";
+    pintarEnvio(datos);
     if (!datos.detectada) {
       estado.textContent = "Buscando una planta";
       punto.className = "punto espera";
@@ -695,11 +726,30 @@ async function tick() {
     poner("verde", datos.verde);
     poner("amarillo", datos.amarillo);
     poner("seco", datos.seco);
-    if (datos.envio) document.getElementById("envio").textContent = datos.envio;
   } catch (e) {
     document.getElementById("estado").textContent = "Sin conexión";
   }
 }
+function pintarEnvio(datos) {
+  const nodo = document.getElementById("envio");
+  const boton = document.getElementById("toggle");
+  if (datos.envio) nodo.textContent = datos.envio;
+  boton.textContent = datos.enviando ? "Parar envío" : "Reanudar envío";
+}
+document.getElementById("toggle").onclick = async () => {
+  const boton = document.getElementById("toggle");
+  const parar = boton.textContent.indexOf("Parar") === 0;
+  const nodo = document.getElementById("envio");
+  nodo.textContent = parar ? "Deteniendo el envío…" : "Reanudando el envío…";
+  try {
+    const respuesta = await fetch(parar ? "/envio/parar" : "/envio/seguir", { method: "POST" });
+    const datos = await respuesta.json();
+    nodo.textContent = datos.mensaje || "Listo";
+    boton.textContent = datos.enviando ? "Parar envío" : "Reanudar envío";
+  } catch (e) {
+    nodo.textContent = "No se pudo cambiar el envío";
+  }
+};
 document.getElementById("enviar").onclick = async () => {
   const nodo = document.getElementById("envio");
   nodo.textContent = "Enviando la foto…";
@@ -749,6 +799,9 @@ class Handler(BaseHTTPRequestHandler):
         if ruta == "/datos":
             with en_vivo.lock:
                 datos = dict(en_vivo.datos)
+            datos["enviando"] = bool(envio_estado["activo"])
+            if envio_estado["texto"]:
+                datos["envio"] = envio_estado["texto"]
             self._enviar(200, "application/json; charset=utf-8", json.dumps(datos).encode("utf-8"))
             return
         if ruta == "/foto":
@@ -769,12 +822,20 @@ class Handler(BaseHTTPRequestHandler):
         largo = int(self.headers.get("Content-Length") or 0)
         if largo:
             self.rfile.read(largo)
-        if ruta != "/enviar":
+        if ruta == "/enviar":
+            mensaje = enviar_actual()
+            enviando = envio_estado["activo"]
+        elif ruta == "/envio/seguir":
+            mensaje = fijar_envio(True)
+            enviando = envio_estado["activo"]
+        elif ruta == "/envio/parar":
+            mensaje = fijar_envio(False)
+            enviando = False
+        else:
             self._enviar(404, "text/plain; charset=utf-8", b"no")
             return
-        mensaje = enviar_actual()
-        cuerpo = json.dumps({"mensaje": mensaje}).encode("utf-8")
-        codigo = 200 if mensaje.startswith("Foto enviada") else 502
+        cuerpo = json.dumps({"mensaje": mensaje, "enviando": enviando}).encode("utf-8")
+        codigo = 200 if ruta != "/enviar" or mensaje.startswith("Foto enviada") else 502
         self._enviar(codigo, "application/json; charset=utf-8", cuerpo)
 
     def _video(self) -> None:
