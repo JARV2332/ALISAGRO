@@ -14,6 +14,7 @@ import subprocess
 import sys
 import threading
 import time
+import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import cv2
@@ -230,6 +231,82 @@ class EnVivo:
 
 en_vivo = EnVivo()
 detener = threading.Event()
+BUCKET_FOTO = os.environ.get("ALISAGRO_FOTO_BUCKET", "").strip()
+CADA_FOTO = max(15, int(os.environ.get("ALISAGRO_FOTO_CADA", "60") or "60"))
+envio_estado = {"texto": ""}
+
+
+def cargar_bucket() -> None:
+    global BUCKET_FOTO
+    if BUCKET_FOTO:
+        return
+    ruta = os.path.join(os.path.dirname(__file__), "..", ".env")
+    try:
+        with open(ruta, encoding="utf-8") as archivo:
+            for linea in archivo:
+                linea = linea.strip()
+                if linea.startswith("ALISAGRO_FOTO_BUCKET="):
+                    BUCKET_FOTO = linea.split("=", 1)[1].strip().strip('"').strip("'")
+    except OSError:
+        return
+
+
+def enviar_jpeg(jpg: bytes, datos: dict) -> str:
+    cargar_bucket()
+    if not BUCKET_FOTO:
+        return "Falta configurar el bucket de fotos."
+    try:
+        import boto3
+    except ImportError:
+        return "Falta boto3 en la Pi."
+    marca = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+    clave = f"fotos/alisagro-pi/{marca}-{uuid.uuid4().hex[:8]}.jpg"
+
+    def texto(clave_dato: str) -> str:
+        try:
+            return f"{float(datos.get(clave_dato) or 0):.1f}"
+        except (TypeError, ValueError):
+            return "0.0"
+
+    boto3.client("s3", region_name=os.environ.get("AWS_DEFAULT_REGION", "us-east-1")).put_object(
+        Bucket=BUCKET_FOTO,
+        Key=clave,
+        Body=jpg,
+        ContentType="image/jpeg",
+        Metadata={
+            "device": "alisagro-pi",
+            "cobertura": texto("cobertura"),
+            "verde": texto("verde"),
+            "amarillo": texto("amarillo"),
+            "seco": texto("seco"),
+        },
+    )
+    return "Foto enviada a AWS."
+
+
+def enviar_actual() -> str:
+    with en_vivo.lock:
+        jpg = en_vivo.jpeg
+        datos = dict(en_vivo.datos)
+    if not jpg:
+        texto_estado = "Todavía no hay imagen."
+    else:
+        try:
+            texto_estado = enviar_jpeg(jpg, datos)
+        except Exception as error:
+            texto_estado = f"No se pudo enviar ({error.__class__.__name__})."
+    envio_estado["texto"] = texto_estado
+    with en_vivo.lock:
+        en_vivo.datos["envio"] = texto_estado
+    return texto_estado
+
+
+def bucle_envio() -> None:
+    if detener.wait(12):
+        return
+    enviar_actual()
+    while not detener.wait(CADA_FOTO):
+        enviar_actual()
 
 
 def fijar_ritmo(indice: int) -> None:
@@ -263,6 +340,7 @@ def publicar(jpg: bytes, resultado: dict, fps: float) -> None:
             "fps": round(fps, 1),
             "lista": True,
             "error": "",
+            "envio": envio_estado["texto"],
         }
     with en_vivo.condicion:
         en_vivo.condicion.notify_all()
@@ -423,6 +501,7 @@ def bucle_camara(indice: int) -> None:
                 "fps": round(fps, 1),
                 "lista": True,
                 "error": "",
+                "envio": envio_estado["texto"],
             }
         with en_vivo.condicion:
             en_vivo.condicion.notify_all()
@@ -564,9 +643,13 @@ HTML = """<!DOCTYPE html>
         <div class="pista"><div class="lleno seco" id="seco-barra"></div></div>
       </div>
       <p class="nota">Primero marca la planta, en la parcela o en la maceta, y mide solo esa zona. No dice el nombre ni diagnostica una enfermedad.</p>
+      <p class="nota" id="envio"></p>
       <div class="pie">
         <span id="ritmo"></span>
-        <button type="button" id="completa">Pantalla completa</button>
+        <span>
+          <button type="button" id="enviar">Enviar foto a AWS</button>
+          <button type="button" id="completa">Pantalla completa</button>
+        </span>
       </div>
     </aside>
   </div>
@@ -612,10 +695,22 @@ async function tick() {
     poner("verde", datos.verde);
     poner("amarillo", datos.amarillo);
     poner("seco", datos.seco);
+    if (datos.envio) document.getElementById("envio").textContent = datos.envio;
   } catch (e) {
     document.getElementById("estado").textContent = "Sin conexión";
   }
 }
+document.getElementById("enviar").onclick = async () => {
+  const nodo = document.getElementById("envio");
+  nodo.textContent = "Enviando la foto…";
+  try {
+    const respuesta = await fetch("/enviar", { method: "POST" });
+    const datos = await respuesta.json();
+    nodo.textContent = datos.mensaje || "Listo";
+  } catch (e) {
+    nodo.textContent = "No se pudo enviar";
+  }
+};
 document.getElementById("completa").onclick = () => {
   const marco = document.getElementById("marco");
   if (document.fullscreenElement) document.exitFullscreen();
@@ -668,6 +763,19 @@ class Handler(BaseHTTPRequestHandler):
             self._video()
             return
         self._enviar(404, "text/plain; charset=utf-8", b"no")
+
+    def do_POST(self) -> None:
+        ruta = self.path.split("?", 1)[0]
+        largo = int(self.headers.get("Content-Length") or 0)
+        if largo:
+            self.rfile.read(largo)
+        if ruta != "/enviar":
+            self._enviar(404, "text/plain; charset=utf-8", b"no")
+            return
+        mensaje = enviar_actual()
+        cuerpo = json.dumps({"mensaje": mensaje}).encode("utf-8")
+        codigo = 200 if mensaje.startswith("Foto enviada") else 502
+        self._enviar(codigo, "application/json; charset=utf-8", cuerpo)
 
     def _video(self) -> None:
         self.send_response(200)
@@ -747,6 +855,9 @@ def servir(indice: int, mantener: bool) -> int:
     vigia = threading.Thread(target=vigilar, args=(servidor, mantener), daemon=True)
     vigia.start()
     print(f"Pantalla lista en http://127.0.0.1:{PUERTO}")
+    cargar_bucket()
+    if BUCKET_FOTO:
+        threading.Thread(target=bucle_envio, daemon=True).start()
 
     def al_cerrar(signo, _frame) -> None:
         detener.set()

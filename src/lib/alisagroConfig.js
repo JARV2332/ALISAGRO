@@ -5,6 +5,7 @@ export const ALI_TABLA_LECTURAS =
   import.meta.env.VITE_ALI_TABLA_LECTURAS || 'ali_lecturas_monitoreo'
 /** Solo la página /aws. El inicio no la usa. */
 export const ALI_TABLA_DEMO_AWS = 'ali_lecturas_aws_demo'
+export const ALI_TABLA_FOTOS_AWS = 'ali_fotos_aws_demo'
 export const ALI_TABLA_NODOS = 'ali_nodos'
 
 export const ALI_DEVICE_OCR = 'PANTALLA_OCR_MANUAL'

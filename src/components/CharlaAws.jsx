@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ALI_NODOS_FALLBACK, ALI_TABLA_DEMO_AWS } from '../lib/alisagroConfig.js'
+import { ALI_NODOS_FALLBACK, ALI_TABLA_DEMO_AWS, ALI_TABLA_FOTOS_AWS } from '../lib/alisagroConfig.js'
 import { supabase } from '../lib/supabaseClient.js'
 import {
-  IconCamera,
   IconCloud,
   IconDroplet,
   IconLogo,
@@ -111,10 +110,26 @@ function estadoNodo(iso, ahora) {
 
 export default function CharlaAws() {
   const [filas, setFilas] = useState([])
+  const [fotos, setFotos] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
+  const [avisoFoto, setAvisoFoto] = useState(null)
   const [enVivo, setEnVivo] = useState(false)
   const [ahora, setAhora] = useState(() => Date.now())
+
+  const cargarFotos = useCallback(async () => {
+    const { data, error: err } = await supabase
+      .from(ALI_TABLA_FOTOS_AWS)
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(6)
+    if (err) {
+      setAvisoFoto(err.message)
+      return
+    }
+    setAvisoFoto(null)
+    setFotos(data ?? [])
+  }, [])
 
   const cargar = useCallback(async () => {
     setError(null)
@@ -131,7 +146,8 @@ export default function CharlaAws() {
     }
     setFilas(data ?? [])
     setCargando(false)
-  }, [])
+    cargarFotos()
+  }, [cargarFotos])
 
   useEffect(() => {
     const titulo = document.title
@@ -166,12 +182,30 @@ export default function CharlaAws() {
       )
       .subscribe((status) => setEnVivo(status === 'SUBSCRIBED'))
 
+    const canalFotos = supabase
+      .channel('alisagro-charla-fotos')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: ALI_TABLA_FOTOS_AWS },
+        (payload) => {
+          if (!payload.new) return
+          setFotos((prev) => {
+            const sinDuplicado = prev.filter((fila) => fila.id !== payload.new.id)
+            return [payload.new, ...sinDuplicado].slice(0, 6)
+          })
+          setAvisoFoto(null)
+        }
+      )
+      .subscribe()
+
     return () => {
       supabase.removeChannel(canal)
+      supabase.removeChannel(canalFotos)
     }
   }, [])
 
   const ultima = filas[0] ?? null
+  const foto = fotos[0] ?? null
   const nodo = ultima ? ALI_NODOS_FALLBACK[ultima.device_id] : null
   const suelo = sueloDe(ultima?.humedad_suelo)
   const senal = estadoNodo(ultima?.created_at, ahora)
@@ -243,14 +277,58 @@ export default function CharlaAws() {
               Qué se está viendo
             </h2>
             <p className="mt-4 text-base sm:text-lg leading-relaxed text-white/85">
-              La cámara encuentra la planta y muestra verde, amarillo y seco visual. En la mesa se
-              ve en vivo. Esta pantalla guarda lo que miden los sensores.
-            </p>
-            <p className="mt-4 flex items-center gap-2 text-sm text-dark-muted">
-              <IconCamera className="w-4 h-4 text-lime" />
-              La foto de la planta se suma aquí cuando la Pi la envíe.
+              La cámara toma la foto en la parcela. Verde, amarillo y seco son el color de esa
+              imagen, no un diagnóstico. La foto queda en S3 y se ve aquí abajo.
             </p>
           </article>
+        </section>
+
+        <section className="space-y-4" aria-label="Foto de la planta">
+          <div>
+            <h2 className="font-display text-xl sm:text-2xl font-bold text-white">
+              Lo que está viendo la Pi
+            </h2>
+            <p className="text-sm text-dark-muted mt-1">
+              La Raspberry envía la foto a S3. Esta pantalla la muestra con la hora.
+            </p>
+          </div>
+          {avisoFoto && (
+            <div className="card p-6 text-amber-200">
+              La foto todavía no se puede leer. En Supabase corre el SQL{' '}
+              <span className="font-bold">008_ali_fotos_aws_demo.sql</span>.
+            </div>
+          )}
+          {!avisoFoto && !foto && (
+            <div className="card p-8 text-dark-muted">
+              Todavía no llega una foto. En la vista de la planta, pulsa «Enviar foto a AWS».
+            </div>
+          )}
+          {foto && (
+            <article className="card overflow-hidden">
+              <img
+                src={foto.url}
+                alt="Foto de la planta enviada por la Raspberry Pi"
+                className="w-full max-h-[520px] object-contain bg-black"
+              />
+              <div className="grid gap-4 p-5 sm:grid-cols-5 sm:p-6">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-dark-muted">Hora</p>
+                  <p className="mt-1 font-display text-xl font-bold text-white">{formatearFecha(foto.created_at)}</p>
+                </div>
+                {[
+                  ['Cobertura', foto.cobertura],
+                  ['Verde', foto.verde],
+                  ['Amarillo', foto.amarillo],
+                  ['Seco visual', foto.seco],
+                ].map(([nombre, valor]) => (
+                  <div key={nombre}>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-dark-muted">{nombre}</p>
+                    <p className="mt-1 font-display text-xl font-bold text-white">{formatearNum(valor, '%')}</p>
+                  </div>
+                ))}
+              </div>
+            </article>
+          )}
         </section>
 
         <section className="space-y-4" aria-label="Lectura de la demo">

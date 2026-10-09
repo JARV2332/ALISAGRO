@@ -37,4 +37,5 @@ if ($IncludeThing) {
 }
 
 Write-Output "Stack $StackName eliminado en $Region."
+Write-Output "Si quedaron las fotos de la Pi, vacía y borra el bucket alisagro-fotos-677123926791, la función alisagro-demo-foto y el usuario IAM alisagro-pi-fotos."
 Write-Output "Revisa en S3 si quedó el bucket de artefactos de SAM y vacíalo si ya no lo usas."

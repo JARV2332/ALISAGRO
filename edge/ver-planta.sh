@@ -1,5 +1,7 @@
 #!/bin/bash
 cd /home/jarv/alisagro-edge || exit 1
+export ALISAGRO_FOTO_BUCKET="${ALISAGRO_FOTO_BUCKET:-alisagro-fotos-677123926791}"
+export AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-us-east-1}"
 
 pkill -f "src/analyze_plant.py" >/dev/null 2>&1 || true
 pkill -f "input_format mjpeg" >/dev/null 2>&1 || true

@@ -91,7 +91,7 @@ export default function DiagramaEcosistema({ paso = 99, completo = true }) {
               encendida={prende(7)}
               fondo="#232f3e"
               titulo="Amazon S3"
-              detalle="La foto, cuando la Pi la envíe"
+              detalle="La foto que envía la Pi"
               icono={imagen(`${AWS}/s3.svg`)}
             />
             )}
