@@ -24,7 +24,7 @@ import DiagramaEcosistema from './charla/DiagramaEcosistema.jsx'
 import { RetoAnfitrion } from './charla/RetoSala.jsx'
 
 const AWS = '/charla'
-const URL_AWS = 'https://alisagro.vercel.app/aws'
+const URL_AWS = 'https://alisagro.com/aws'
 
 const LAMINAS = [
   { id: 'inicio', nav: 'Inicio', tiempo: '0 min' },
@@ -661,10 +661,10 @@ function LaminaCierre() {
           <span className="mt-2 block text-[#a4c639]">al mundo digital.</span>
         </h2>
         <p className="charla-cuerpo mt-4 max-w-2xl text-white/80">
-          Arduino puede ser el comienzo. Ese dispositivo se puede unir a la nube, a una aplicación y a una cámara que mira la misma planta.
+          Arduino puede ser el comienzo. Ese dispositivo se puede unir a la nube, a una aplicación, a Alexa y a una cámara que mira la misma planta.
         </p>
         <p className="mt-3 text-lg text-white/70">
-          <a href={URL_AWS} className="font-bold text-[#a4c639] hover:underline">alisagro.vercel.app/aws</a>
+          <a href={URL_AWS} className="font-bold text-[#a4c639] hover:underline">alisagro.com/aws</a>
           <span className="mx-3 text-white/30">·</span>
           <a href="https://github.com/JARV2332/ALISAGRO" className="font-bold text-white hover:underline" target="_blank" rel="noreferrer">GitHub</a>
         </p>
@@ -674,7 +674,7 @@ function LaminaCierre() {
       </div>
       <div className="justify-self-center rounded-[28px] bg-white p-5 shadow-[0_20px_50px_rgb(0_0_0/0.45)]">
         <QRCodeSVG value={URL_AWS} size={280} bgColor="#ffffff" fgColor="#121212" />
-        <p className="mt-3 text-center text-lg font-bold text-[#121212]">alisagro.vercel.app/aws</p>
+        <p className="mt-3 text-center text-lg font-bold text-[#121212]">alisagro.com/aws</p>
       </div>
     </div>
   )
