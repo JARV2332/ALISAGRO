@@ -112,7 +112,7 @@ export default function DiagramaEcosistema({ paso = 99, completo = true }) {
 
         <Flecha texto="escribe" visible={prende(4)} />
 
-        <Zona titulo={completo ? 'Quién consulta la planta' : 'Lo que ALISAGRO ya tenía'}>
+        <Zona titulo="Quién consulta la planta">
           <Ficha
             encendida={prende(4)}
             activa={activa(4)}
@@ -134,16 +134,14 @@ export default function DiagramaEcosistema({ paso = 99, completo = true }) {
               </span>
             }
           />
-          {completo && (
-            <Ficha
-              encendida={prende(8)}
-              activa={activa(8)}
-              fondo="#00CAFF"
-              titulo="Alexa"
-              detalle="Lambda lee y responde"
-              icono={<Mic size={26} strokeWidth={2} className="text-[#121212]" />}
-            />
-          )}
+          <Ficha
+            encendida={prende(6)}
+            activa={activa(6)}
+            fondo="#00CAFF"
+            titulo="Alexa"
+            detalle="Lambda lee y responde"
+            icono={<Mic size={26} strokeWidth={2} className="text-[#121212]" />}
+          />
         </Zona>
       </div>
 

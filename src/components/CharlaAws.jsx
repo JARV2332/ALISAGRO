@@ -357,7 +357,16 @@ export default function CharlaAws() {
               </a>
             </div>
           </div>
-          <Parcela />
+          <figure className="relative w-full max-w-md shrink-0 overflow-hidden rounded-[28px] shadow-[0_16px_40px_rgb(0_0_0/0.45)] ring-1 ring-white/10">
+            <img
+              src="/img/montaje.jpg"
+              alt="La planta, el sensor y la cámara de la parcela"
+              className="h-44 w-full object-cover sm:h-56 lg:h-64"
+            />
+            <figcaption className="absolute left-4 top-4 rounded-full bg-[#121212]/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[#a4c639]">
+              Parcela
+            </figcaption>
+          </figure>
         </div>
       </header>
 
@@ -699,30 +708,3 @@ export default function CharlaAws() {
   )
 }
 
-function Parcela() {
-  return (
-    <svg viewBox="0 0 420 260" className="h-36 w-full max-w-md shrink-0 sm:h-52 lg:h-64" role="img" aria-label="Parcela con sensores y la cámara de la Raspberry">
-      <rect x="0" y="0" width="420" height="260" rx="28" fill="#1a1a1a" />
-      <path d="M0 168 C80 140 140 190 220 160 C300 130 350 150 420 128 L420 260 L0 260 Z" fill="#232323" />
-      <path d="M0 190 C90 170 150 210 240 186 C320 164 370 176 420 160 L420 260 L0 260 Z" fill="#121212" />
-      <g fill="#a4c639">
-        <ellipse cx="70" cy="176" rx="16" ry="7" opacity="0.35" />
-        <path d="M70 176 C66 150 58 142 62 128 C74 146 78 156 70 176 Z" />
-        <path d="M70 176 C78 148 92 140 96 124 C82 146 74 158 70 176 Z" />
-        <ellipse cx="150" cy="188" rx="18" ry="7" opacity="0.35" />
-        <path d="M150 188 C144 158 132 148 136 130 C152 152 158 166 150 188 Z" />
-        <path d="M150 188 C160 156 178 146 184 128 C166 154 156 168 150 188 Z" />
-        <ellipse cx="250" cy="176" rx="16" ry="7" opacity="0.35" />
-        <path d="M250 176 C244 150 232 140 236 124 C250 146 256 158 250 176 Z" />
-        <path d="M250 176 C260 148 276 140 280 124 C264 148 254 160 250 176 Z" />
-      </g>
-      <rect x="292" y="78" width="86" height="58" rx="10" fill="#0e0e0e" stroke="#FF9900" strokeWidth="2" />
-      <circle cx="335" cy="107" r="14" fill="#232323" stroke="#a4c639" strokeWidth="3" />
-      <circle cx="335" cy="107" r="5" fill="#a4c639" />
-      <path d="M318 78 L308 62 H362 L352 78" fill="none" stroke="#FF9900" strokeWidth="2" />
-      <rect x="40" y="92" width="8" height="70" rx="2" fill="#d4e68a" />
-      <circle cx="44" cy="86" r="10" fill="#a4c639" />
-      <text x="28" y="48" fill="#a4c639" fontSize="13" fontFamily="system-ui, sans-serif" fontWeight="700">Parcela</text>
-    </svg>
-  )
-}

@@ -85,6 +85,11 @@ const PIEZAS = [
     detalle: 'La misma aplicación. Una pantalla más para contar esta historia.',
     frase: 'No migramos ALISAGRO a AWS. Extendimos ALISAGRO con AWS.',
   },
+  {
+    titulo: 'Alexa',
+    detalle: 'Pregunta cómo está la planta. Otra Lambda lee la misma tabla y responde.',
+    frase: 'La misma lectura se puede ver en la pantalla y se puede preguntar en voz.',
+  },
 ]
 
 function indiceInicial() {
