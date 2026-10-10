@@ -13,6 +13,7 @@ import {
   Droplets,
   Eye,
   LayoutDashboard,
+  Mic,
   Monitor,
   Radio,
   ScanEye,
@@ -31,13 +32,14 @@ const LAMINAS = [
   { id: 'hook', nav: 'La planta', tiempo: '0–4 min' },
   { id: 'problema', nav: '01 · El problema', tiempo: '4–9 min' },
   { id: 'arduino', nav: '02 · Del Arduino al IoT', tiempo: '9–14 min' },
-  { id: 'arquitectura', nav: '03 · Arquitectura', tiempo: '14–20 min' },
-  { id: 'demo', nav: '04 · Demo', tiempo: '20–27 min' },
-  { id: 'edge', nav: '05 · Edge AI', tiempo: '27–33 min' },
-  { id: 'viaje', nav: '06 · El viaje del dato', tiempo: '33–38 min' },
-  { id: 'como', nav: '07 · Cómo se construyó', tiempo: '38–43 min' },
-  { id: 'reto', nav: '08 · Reto', tiempo: '43–48 min' },
-  { id: 'cierre', nav: '09 · Conclusión', tiempo: '48–50 min' },
+  { id: 'glosario', nav: '03 · Las palabras', tiempo: '14–17 min' },
+  { id: 'arquitectura', nav: '04 · Arquitectura', tiempo: '17–22 min' },
+  { id: 'demo', nav: '05 · Demo', tiempo: '22–28 min' },
+  { id: 'edge', nav: '06 · Edge AI', tiempo: '28–33 min' },
+  { id: 'viaje', nav: '07 · El viaje del dato', tiempo: '33–38 min' },
+  { id: 'como', nav: '08 · Cómo se construyó', tiempo: '38–43 min' },
+  { id: 'reto', nav: '09 · Reto', tiempo: '43–48 min' },
+  { id: 'cierre', nav: '10 · Conclusión', tiempo: '48–50 min' },
 ]
 
 const HALOS = [
@@ -45,6 +47,7 @@ const HALOS = [
   ['82% 20%', '255 153 0'],
   ['20% 80%', '164 198 57'],
   ['75% 70%', '255 153 0'],
+  ['55% 45%', '164 198 57'],
   ['50% 15%', '255 153 0'],
   ['12% 60%', '164 198 57'],
   ['88% 40%', '164 198 57'],
@@ -254,6 +257,7 @@ export default function CharlaPresentacion() {
             {lamina.id === 'hook' && <LaminaHook />}
             {lamina.id === 'problema' && <LaminaProblema />}
             {lamina.id === 'arduino' && <LaminaArduino />}
+            {lamina.id === 'glosario' && <LaminaGlosario />}
             {lamina.id === 'arquitectura' && (
               <LaminaArquitectura pieza={pieza} onPieza={setPieza} />
             )}
@@ -416,6 +420,51 @@ function LaminaArduino() {
         <span className="text-white/45">{'}'}</span>
       </pre>
       </div>
+    </div>
+  )
+}
+
+const GLOSARIO = [
+  { nombre: 'Wemos', texto: 'El aparatito que mide y manda el dato.', logo: 'arduino.svg', invertir: true },
+  { nombre: 'IoT Core', texto: 'La puerta de AWS por donde entra ese aparato.', logo: 'iot-core.svg' },
+  { nombre: 'Lambda', texto: 'Un programa que despierta cuando llega un dato y luego se apaga.', logo: 'lambda.svg' },
+  { nombre: 'Bucket de S3', texto: 'La caja en la nube donde se guarda la foto.', logo: 's3.svg' },
+  { nombre: 'Skill', texto: 'La habilidad de Alexa. La nuestra se llama «mi planta».', icono: Mic },
+  { nombre: 'Supabase', texto: 'La tabla donde queda guardada la lectura.', logo: 'supabase.svg', invertir: true },
+  { nombre: 'IAM', texto: 'El permiso: quién puede entrar y qué puede hacer.', logo: 'iam.svg' },
+  { nombre: 'CloudWatch', texto: 'El cuaderno donde AWS anota si algo falló.', logo: 'cloudwatch.svg' },
+  { nombre: 'Raspberry Pi', texto: 'La computadora pequeña, junto a la planta, con la cámara.', logo: 'raspberrypi.svg', invertir: true },
+  { nombre: 'ALISAGRO', texto: 'Esta pantalla. No se mudó: se le agregó AWS.', logo: 'react.svg' },
+]
+
+function LaminaGlosario() {
+  return (
+    <div className="charla-entra flex h-full w-full flex-col justify-center gap-3">
+      <div>
+        <h2 className="font-display text-[clamp(1.6rem,2.4vw,2.4rem)] font-bold leading-tight">Las palabras de hoy</h2>
+        <p className="mt-1 text-lg text-white/70">Si no vienes de sistemas, con esto basta para seguir la charla.</p>
+      </div>
+      <ul className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        {GLOSARIO.map((item) => (
+          <li key={item.nombre} className="flex items-start gap-3 rounded-2xl bg-[#1a1a1a] p-3 shadow-[0_10px_28px_rgb(0_0_0/0.35)] ring-1 ring-white/10">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[#232323]">
+              {item.icono ? (
+                <item.icono size={26} strokeWidth={2} className="text-[#00CAFF]" />
+              ) : (
+                <img
+                  src={`${AWS}/${item.logo}`}
+                  alt=""
+                  className={`h-8 w-8 object-contain ${item.invertir ? 'brightness-0 invert' : ''}`}
+                />
+              )}
+            </span>
+            <span className="min-w-0">
+              <span className="block text-lg font-bold leading-tight text-white">{item.nombre}</span>
+              <span className="mt-1 block text-base leading-snug text-white/75">{item.texto}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
