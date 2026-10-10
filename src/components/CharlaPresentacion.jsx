@@ -26,6 +26,7 @@ import { RetoAnfitrion } from './charla/RetoSala.jsx'
 
 const AWS = '/charla'
 const URL_AWS = 'https://alisagro.com/aws'
+const URL_LINKEDIN = 'https://www.linkedin.com/in/jarv28/'
 
 const LAMINAS = [
   { id: 'inicio', nav: 'Inicio', tiempo: '0 min' },
@@ -703,7 +704,7 @@ function LaminaReto() {
 
 function LaminaCierre() {
   return (
-    <div className="charla-entra grid h-full w-full items-center gap-10 lg:grid-cols-[1.3fr_0.7fr]">
+    <div className="charla-entra grid h-full w-full items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
       <div>
         <img
           src="/charla/community-day.png"
@@ -720,15 +721,23 @@ function LaminaCierre() {
         <p className="mt-3 text-lg text-white/70">
           <a href={URL_AWS} className="font-bold text-[#a4c639] hover:underline">alisagro.com/aws</a>
           <span className="mx-3 text-white/30">·</span>
+          <a href={URL_LINKEDIN} className="font-bold text-white hover:underline" target="_blank" rel="noreferrer">LinkedIn</a>
+          <span className="mx-3 text-white/30">·</span>
           <a href="https://github.com/JARV2332/ALISAGRO" className="font-bold text-white hover:underline" target="_blank" rel="noreferrer">GitHub</a>
         </p>
         <p className="mt-3 max-w-2xl text-xl font-semibold leading-snug">
           IoT es conectar el mundo físico con el mundo digital.
         </p>
       </div>
-      <div className="justify-self-center rounded-[28px] bg-white p-5 shadow-[0_20px_50px_rgb(0_0_0/0.45)]">
-        <QRCodeSVG value={URL_AWS} size={280} bgColor="#ffffff" fgColor="#121212" />
-        <p className="mt-3 text-center text-lg font-bold text-[#121212]">alisagro.com/aws</p>
+      <div className="flex flex-wrap items-start justify-center gap-4">
+        <div className="rounded-[28px] bg-white p-4 shadow-[0_20px_50px_rgb(0_0_0/0.45)]">
+          <QRCodeSVG value={URL_AWS} size={200} bgColor="#ffffff" fgColor="#121212" />
+          <p className="mt-3 text-center text-base font-bold text-[#121212]">alisagro.com/aws</p>
+        </div>
+        <div className="rounded-[28px] bg-white p-4 shadow-[0_20px_50px_rgb(0_0_0/0.45)]">
+          <QRCodeSVG value={URL_LINKEDIN} size={200} bgColor="#ffffff" fgColor="#121212" />
+          <p className="mt-3 text-center text-base font-bold text-[#121212]">LinkedIn</p>
+        </div>
       </div>
     </div>
   )
