@@ -27,6 +27,7 @@ import { RetoAnfitrion } from './charla/RetoSala.jsx'
 const AWS = '/charla'
 const URL_AWS = 'https://alisagro.com/aws'
 const URL_LINKEDIN = 'https://www.linkedin.com/in/jarv28/'
+const URL_EDUKIDS = 'https://www.facebook.com/edukidsgt?locale=es_LA'
 
 const LAMINAS = [
   { id: 'inicio', nav: 'Inicio', tiempo: '0 min' },
@@ -723,20 +724,26 @@ function LaminaCierre() {
           <span className="mx-3 text-white/30">·</span>
           <a href={URL_LINKEDIN} className="font-bold text-white hover:underline" target="_blank" rel="noreferrer">LinkedIn</a>
           <span className="mx-3 text-white/30">·</span>
+          <a href={URL_EDUKIDS} className="font-bold text-white hover:underline" target="_blank" rel="noreferrer">EDUKIDS</a>
+          <span className="mx-3 text-white/30">·</span>
           <a href="https://github.com/JARV2332/ALISAGRO" className="font-bold text-white hover:underline" target="_blank" rel="noreferrer">GitHub</a>
         </p>
         <p className="mt-3 max-w-2xl text-xl font-semibold leading-snug">
           IoT es conectar el mundo físico con el mundo digital.
         </p>
       </div>
-      <div className="flex flex-wrap items-start justify-center gap-4">
-        <div className="rounded-[28px] bg-white p-4 shadow-[0_20px_50px_rgb(0_0_0/0.45)]">
-          <QRCodeSVG value={URL_AWS} size={200} bgColor="#ffffff" fgColor="#121212" />
-          <p className="mt-3 text-center text-base font-bold text-[#121212]">alisagro.com/aws</p>
+      <div className="grid grid-cols-3 items-start justify-center gap-3">
+        <div className="rounded-[28px] bg-white p-3 shadow-[0_20px_50px_rgb(0_0_0/0.45)]">
+          <QRCodeSVG value={URL_AWS} size={148} bgColor="#ffffff" fgColor="#121212" className="h-auto w-full" />
+          <p className="mt-2 text-center text-sm font-bold text-[#121212]">alisagro.com/aws</p>
         </div>
-        <div className="rounded-[28px] bg-white p-4 shadow-[0_20px_50px_rgb(0_0_0/0.45)]">
-          <QRCodeSVG value={URL_LINKEDIN} size={200} bgColor="#ffffff" fgColor="#121212" />
-          <p className="mt-3 text-center text-base font-bold text-[#121212]">LinkedIn</p>
+        <div className="rounded-[28px] bg-white p-3 shadow-[0_20px_50px_rgb(0_0_0/0.45)]">
+          <QRCodeSVG value={URL_LINKEDIN} size={148} bgColor="#ffffff" fgColor="#121212" className="h-auto w-full" />
+          <p className="mt-2 text-center text-sm font-bold text-[#121212]">LinkedIn</p>
+        </div>
+        <div className="rounded-[28px] bg-white p-3 shadow-[0_20px_50px_rgb(0_0_0/0.45)]">
+          <QRCodeSVG value={URL_EDUKIDS} size={148} bgColor="#ffffff" fgColor="#121212" className="h-auto w-full" />
+          <p className="mt-2 text-center text-sm font-bold text-[#121212]">EDUKIDS</p>
         </div>
       </div>
     </div>
