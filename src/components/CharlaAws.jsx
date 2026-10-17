@@ -149,7 +149,7 @@ function pielLectura(suelo, senal) {
 
 function analisisDe(valor) {
   const n = Number(valor)
-  if (!Number.isFinite(n) || n === 0) return null
+  if (!Number.isFinite(n)) return null
   return n
 }
 
@@ -218,6 +218,7 @@ function Numero({ valor, decimales = 1, className = '' }) {
 export default function CharlaAws() {
   const [filas, setFilas] = useState([])
   const [fotos, setFotos] = useState([])
+  const [fotoId, setFotoId] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
   const [avisoFoto, setAvisoFoto] = useState(null)
@@ -312,7 +313,7 @@ export default function CharlaAws() {
   }, [])
 
   const ultima = filas[0] ?? null
-  const foto = fotos[0] ?? null
+  const foto = fotos.find((item) => item.id === fotoId) ?? fotos[0] ?? null
   const nodo = ultima ? ALI_NODOS_FALLBACK[ultima.device_id] : null
   const suelo = sueloDe(ultima?.humedad_suelo)
   const senal = estadoNodo(ultima?.created_at, ahora)
@@ -508,6 +509,38 @@ export default function CharlaAws() {
                     </dl>
                   )}
                 </article>
+              </div>
+            )}
+            {fotos.length > 1 && (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {fotos.slice(0, 4).map((item) => {
+                  const activa = item.id === foto?.id
+                  const verde = analisisDe(item.verde)
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setFotoId(item.id)}
+                      className={`overflow-hidden rounded-2xl border bg-[#1a1a1a] text-left shadow-[0_8px_24px_rgb(0_0_0/0.28)] ${
+                        activa ? 'border-[#a4c639]' : 'border-white/10'
+                      }`}
+                    >
+                      <img
+                        src={item.url}
+                        alt=""
+                        width={320}
+                        height={240}
+                        className="aspect-[4/3] w-full object-cover"
+                      />
+                      <span className="block px-3 py-2">
+                        <span className="block text-sm font-bold text-white">{formatearFecha(item.created_at)}</span>
+                        <span className="mt-0.5 block text-xs text-white/50">
+                          {verde == null ? 'Sin análisis' : `Verde ${Math.round(verde)}%`}
+                        </span>
+                      </span>
+                    </button>
+                  )
+                })}
               </div>
             )}
           </section>
